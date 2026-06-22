@@ -17,6 +17,15 @@ export interface Winner {
   prizeName: string
   prizeEmoji: string
   timestamp: number
+  name?: string
+  phone?: string
+  consent?: boolean
+}
+
+export interface LeadInfo {
+  name: string
+  phone: string
+  consent: boolean
 }
 
 interface WheelState {
@@ -35,7 +44,7 @@ interface WheelState {
   setIsSpinning: (v: boolean) => void
   setCurrentWinner: (prize: Prize | null) => void
   setShowWinnerOverlay: (v: boolean) => void
-  recordWinner: (prize: Prize) => void
+  recordWinner: (prize: Prize, lead?: LeadInfo) => void
   clearWinners: () => void
   setAdminUnlocked: (v: boolean) => void
   setSoundEnabled: (v: boolean) => void
@@ -73,10 +82,18 @@ export const useWheelStore = create<WheelState>()(
       setIsSpinning: (v) => set({ isSpinning: v }),
       setCurrentWinner: (prize) => set({ currentWinner: prize }),
       setShowWinnerOverlay: (v) => set({ showWinnerOverlay: v }),
-      recordWinner: (prize) =>
+      recordWinner: (prize, lead) =>
         set((s) => ({
           winners: [
-            { id: Date.now().toString(), prizeName: prize.name, prizeEmoji: prize.emoji, timestamp: Date.now() },
+            {
+              id: Date.now().toString(),
+              prizeName: prize.name,
+              prizeEmoji: prize.emoji,
+              timestamp: Date.now(),
+              name: lead?.name,
+              phone: lead?.phone,
+              consent: lead?.consent,
+            },
             ...s.winners,
           ],
         })),

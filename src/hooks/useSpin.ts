@@ -11,8 +11,6 @@ export function useSpin(wheelRef: React.RefObject<SVGGElement | null>) {
     setIsSpinning,
     setCurrentWinner,
     setShowWinnerOverlay,
-    recordWinner,
-    decrementPrize,
     soundEnabled,
   } = useWheelStore()
 
@@ -79,8 +77,7 @@ export function useSpin(wheelRef: React.RefObject<SVGGElement | null>) {
       setIsSpinning(false)
       setCurrentWinner(winner)
       setShowWinnerOverlay(true)
-      recordWinner(winner)
-      if (winner.quantity > 0) decrementPrize(winner.id)
+      // Lead capture + inventory decrement happen when the guest claims the prize (WinnerOverlay).
       playSound('win')
 
       confetti({
@@ -90,7 +87,7 @@ export function useSpin(wheelRef: React.RefObject<SVGGElement | null>) {
         colors: [winner.color, '#ffd700', '#ffffff', '#ff6b6b', '#4ecdc4'],
       })
     }, spinDuration)
-  }, [isSpinning, prizes, wheelRef, setIsSpinning, setCurrentWinner, setShowWinnerOverlay, recordWinner, decrementPrize, playSound])
+  }, [isSpinning, prizes, wheelRef, setIsSpinning, setCurrentWinner, setShowWinnerOverlay, playSound])
 
   return { spin, rotationRef }
 }

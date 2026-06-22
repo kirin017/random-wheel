@@ -100,11 +100,23 @@ export default function AdminPanel() {
   }
 
   function exportWinners() {
-    const csv = ['Giải thưởng,Thời gian', ...winners.map((w) => `${w.prizeEmoji} ${w.prizeName},${new Date(w.timestamp).toLocaleString('vi-VN')}`)].join('\n')
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const esc = (v: string) => `"${(v ?? '').replace(/"/g, '""')}"`
+    const rows = [
+      ['Họ tên', 'Số điện thoại', 'Giải thưởng', 'Đồng ý nhận tin', 'Thời gian'],
+      ...winners.map((w) => [
+        w.name ?? '',
+        w.phone ?? '',
+        `${w.prizeEmoji} ${w.prizeName}`,
+        w.consent ? 'Có' : 'Không',
+        new Date(w.timestamp).toLocaleString('vi-VN'),
+      ]),
+    ]
+    const csv = rows.map((r) => r.map(esc).join(',')).join('\n')
+    // BOM so Excel reads Vietnamese (UTF-8) correctly
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' })
     const a = document.createElement('a')
     a.href = URL.createObjectURL(blob)
-    a.download = 'danh-sach-trung-thuong.csv'
+    a.download = 'danh-sach-khach-hang-byt.csv'
     a.click()
   }
 
@@ -224,7 +236,7 @@ export default function AdminPanel() {
       {winners.length > 0 && (
         <div className="border-t border-cream-300/70 pt-4 space-y-2">
           <div className="flex items-center justify-between">
-            <h3 className="font-display text-sm font-bold text-cocoa-900">Lịch sử trao quà ({winners.length})</h3>
+            <h3 className="font-display text-sm font-bold text-cocoa-900">Khách hàng đã nhận ({winners.length})</h3>
             <div className="flex gap-2">
               <button onClick={exportWinners} className="text-xs bg-sage-50 hover:bg-sage-100 text-sage-700 px-3 py-1.5 rounded-lg transition-colors font-medium">Xuất CSV</button>
               <button onClick={clearWinners} className="text-xs bg-clay-300/40 hover:bg-clay-300/70 text-clay-600 px-3 py-1.5 rounded-lg transition-colors font-medium">Xóa</button>
@@ -233,9 +245,14 @@ export default function AdminPanel() {
           <div className="space-y-1 max-h-40 overflow-y-auto">
             {winners.map((w) => (
               <div key={w.id} className="flex items-center gap-2 text-sm text-cocoa-700 bg-cream-100 px-3 py-2 rounded-xl">
-                <span>{w.prizeEmoji}</span>
-                <span className="flex-1 font-medium truncate">{w.prizeName}</span>
-                <span className="text-xs text-cocoa-500">{new Date(w.timestamp).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</span>
+                <span className="shrink-0">{w.prizeEmoji}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-cocoa-900 truncate leading-tight">
+                    {w.name || 'Khách'}{w.phone ? <span className="font-normal text-cocoa-500"> · {w.phone}</span> : null}
+                  </p>
+                  <p className="text-xs text-cocoa-500 truncate leading-tight">{w.prizeName}</p>
+                </div>
+                <span className="text-xs text-cocoa-500 shrink-0">{new Date(w.timestamp).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</span>
               </div>
             ))}
           </div>
