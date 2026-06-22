@@ -41,11 +41,11 @@ interface WheelState {
 }
 
 const DEFAULT_PRIZES: Prize[] = [
-  { id: '1', name: 'Giải Nhất', color: '#f59e0b', quantity: 1, weight: 5, emoji: '🥇' },
-  { id: '2', name: 'Giải Nhì', color: '#60a5fa', quantity: 2, weight: 10, emoji: '🥈' },
-  { id: '3', name: 'Giải Ba', color: '#34d399', quantity: 3, weight: 15, emoji: '🥉' },
-  { id: '4', name: 'Khuyến Khích', color: '#f472b6', quantity: 10, weight: 30, emoji: '🎁' },
-  { id: '5', name: 'Thử Lại', color: '#a78bfa', quantity: -1, weight: 40, emoji: '🔄' },
+  { id: '1', name: 'Giải Nhất', color: '#b66639', quantity: 1, weight: 5, emoji: '🥇' },
+  { id: '2', name: 'Giải Nhì', color: '#4c7257', quantity: 2, weight: 10, emoji: '🥈' },
+  { id: '3', name: 'Giải Ba', color: '#b58a3c', quantity: 3, weight: 15, emoji: '🥉' },
+  { id: '4', name: 'Quà Tặng', color: '#cd7c4d', quantity: 10, weight: 30, emoji: '🎁' },
+  { id: '5', name: 'Lành Hơn Mỗi Ngày', color: '#6f9079', quantity: -1, weight: 40, emoji: '🌿' },
 ]
 
 export const useWheelStore = create<WheelState>()(
