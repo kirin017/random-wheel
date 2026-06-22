@@ -35,10 +35,10 @@ function Segment({ prize, startAngle, endAngle, cx, cy, r }: SegmentProps) {
     <g>
       <path
         d={buildSegmentPath(cx, cy, r, startAngle, endAngle)}
-        fill={prize.quantity === 0 ? '#374151' : prize.color}
-        stroke="#1f2937"
-        strokeWidth="2"
-        opacity={prize.quantity === 0 ? 0.4 : 1}
+        fill={prize.quantity === 0 ? '#d8cdba' : prize.color}
+        stroke="#fdfaf3"
+        strokeWidth="3"
+        opacity={prize.quantity === 0 ? 0.55 : 1}
       />
       {/* Segment label */}
       <g transform={`translate(${textPos.x}, ${textPos.y}) rotate(${textAngle})`}>
@@ -48,7 +48,7 @@ function Segment({ prize, startAngle, endAngle, cx, cy, r }: SegmentProps) {
           fill="white"
           fontSize={endAngle - startAngle > 30 ? '11' : '8'}
           fontWeight="700"
-          style={{ textShadow: '0 1px 3px rgba(0,0,0,0.8)', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.8))' }}
+          style={{ fontFamily: '"Be Vietnam Pro", sans-serif', textShadow: '0 1px 2px rgba(47,38,32,0.45)' }}
         >
           {prize.name.length > 12 ? prize.name.slice(0, 11) + '…' : prize.name}
         </text>
@@ -101,7 +101,7 @@ export default function Wheel() {
       <div className="relative">
         <div
           className={`absolute inset-0 rounded-full ${isSpinning ? 'pulse-ring' : ''}`}
-          style={{ background: 'radial-gradient(circle, rgba(245,158,11,0.15) 0%, transparent 70%)' }}
+          style={{ background: 'radial-gradient(circle, rgba(95,138,108,0.18) 0%, transparent 70%)' }}
         />
 
         <svg
@@ -110,37 +110,40 @@ export default function Wheel() {
           viewBox="0 0 500 500"
           className="wheel-shadow max-w-[min(90vw,500px)]"
         >
-          {/* Outer decorative ring */}
-          <circle cx={cx} cy={cy} r={r + 12} fill="none" stroke="#f59e0b" strokeWidth="6" opacity="0.6" />
-          <circle cx={cx} cy={cy} r={r + 18} fill="none" stroke="#d97706" strokeWidth="2" opacity="0.3" />
+          {/* Outer decorative ring (warm cream rim) */}
+          <circle cx={cx} cy={cy} r={r + 14} fill="#fdfaf3" stroke="#ecdfc4" strokeWidth="3" />
+          <circle cx={cx} cy={cy} r={r + 5} fill="none" stroke="#5f8a6c" strokeWidth="4" opacity="0.45" />
 
           {/* Wheel segments */}
           <g ref={wheelGroupRef} style={{ transformOrigin: `${cx}px ${cy}px` }}>
             {segments.map(({ prize, start, end }) => (
               <Segment key={prize.id} prize={prize} startAngle={start} endAngle={end} cx={cx} cy={cy} r={r} />
             ))}
-            {/* Center circle */}
-            <circle cx={cx} cy={cy} r={28} fill="#1f2937" stroke="#f59e0b" strokeWidth="4" />
-            <text x={cx} y={cy} textAnchor="middle" dominantBaseline="middle" fontSize="20">
-              🎡
+            {/* Center hub */}
+            <circle cx={cx} cy={cy} r={30} fill="#4c7257" stroke="#fdfaf3" strokeWidth="5" />
+            <text
+              x={cx}
+              y={cy + 1}
+              textAnchor="middle"
+              dominantBaseline="middle"
+              fontSize="15"
+              fontWeight="800"
+              fill="#fdfaf3"
+              style={{ fontFamily: '"Baloo 2", sans-serif' }}
+            >
+              BYT
             </text>
           </g>
 
-          {/* Pointer (top, fixed) */}
+          {/* Pointer (top, fixed) — terracotta */}
           <polygon
-            points={`${cx - 14},${cy - r - 8} ${cx + 14},${cy - r - 8} ${cx},${cy - r + 20}`}
-            fill="#ef4444"
-            stroke="#dc2626"
-            strokeWidth="2"
-            filter="drop-shadow(0 2px 4px rgba(0,0,0,0.5))"
+            points={`${cx - 13},${cy - r - 6} ${cx + 13},${cy - r - 6} ${cx},${cy - r + 22}`}
+            fill="#b66639"
+            stroke="#fdfaf3"
+            strokeWidth="3"
+            filter="drop-shadow(0 3px 5px rgba(71,59,48,0.35))"
           />
-          <polygon
-            points={`${cx - 14},${cy - r - 8} ${cx + 14},${cy - r - 8} ${cx},${cy - r - 30}`}
-            fill="#ef4444"
-            stroke="#dc2626"
-            strokeWidth="2"
-            filter="drop-shadow(0 -2px 4px rgba(0,0,0,0.5))"
-          />
+          <circle cx={cx} cy={cy - r - 6} r="9" fill="#cd7c4d" stroke="#fdfaf3" strokeWidth="3" />
         </svg>
       </div>
 
@@ -149,23 +152,15 @@ export default function Wheel() {
         onClick={spin}
         disabled={isSpinning || available.length === 0}
         className={`
-          relative px-12 py-4 rounded-full text-xl font-black tracking-wide uppercase
+          relative px-11 py-4 rounded-full font-display text-xl font-extrabold tracking-wide
           transition-all duration-200 select-none
           ${isSpinning || available.length === 0
-            ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
-            : 'bg-gradient-to-r from-amber-400 to-orange-500 text-gray-900 hover:from-amber-300 hover:to-orange-400 hover:scale-105 active:scale-95 glow-gold cursor-pointer'
+            ? 'bg-cream-300 text-cocoa-500/70 cursor-not-allowed'
+            : 'bg-sage-600 text-cream-50 shadow-lift hover:bg-sage-700 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] cursor-pointer'
           }
         `}
       >
-        {isSpinning ? (
-          <span className="flex items-center gap-2">
-            <span className="inline-block animate-spin">🎡</span> Đang quay…
-          </span>
-        ) : available.length === 0 ? (
-          '🎉 Hết giải thưởng!'
-        ) : (
-          '🎰 QUAY NGAY!'
-        )}
+        {isSpinning ? 'Đang quay…' : available.length === 0 ? 'Đã trao hết quà' : 'Quay ngay'}
       </button>
     </div>
   )

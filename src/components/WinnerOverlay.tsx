@@ -23,51 +23,53 @@ export default function WinnerOverlay() {
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center animate-fade-in"
-      style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)' }}
+      style={{ background: 'rgba(47,38,32,0.55)', backdropFilter: 'blur(6px)' }}
       onClick={handleClose}
     >
       <div
-        className="relative animate-bounce-in text-center px-8 py-10 rounded-3xl max-w-md w-full mx-4"
-        style={{
-          background: `radial-gradient(circle at top, ${currentWinner.color}22 0%, #111827 60%)`,
-          border: `3px solid ${currentWinner.color}`,
-          boxShadow: `0 0 60px ${currentWinner.color}66, 0 0 120px ${currentWinner.color}33`,
-        }}
+        className="relative animate-bounce-in text-center px-8 py-10 rounded-[28px] max-w-md w-full mx-4 bg-cream-50 shadow-lift"
+        style={{ border: `2px solid ${currentWinner.color}` }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Top sparkles */}
-        <div className="absolute -top-5 left-1/2 -translate-x-1/2 flex gap-2 text-2xl">
-          <span>✨</span><span>🎊</span><span>✨</span>
-        </div>
+        {/* Brand-colored top accent bar */}
+        <div
+          className="absolute top-0 inset-x-10 h-1.5 rounded-b-full"
+          style={{ background: currentWinner.color }}
+        />
 
-        <p className="text-gray-400 text-sm uppercase tracking-widest mb-2 font-semibold">
-          🎉 Chúc mừng! Bạn nhận được
+        <p className="text-cocoa-500 text-sm mb-4 font-medium">
+          Chúc mừng bạn nhận được
         </p>
 
-        <div className="text-7xl mb-4 drop-shadow-lg">{currentWinner.emoji}</div>
+        <div
+          className="mx-auto mb-5 w-24 h-24 rounded-full grid place-items-center text-5xl animate-float-soft"
+          style={{ background: `${currentWinner.color}1f` }}
+        >
+          {currentWinner.emoji}
+        </div>
 
         <h2
-          className="text-4xl font-black mb-3 shimmer-text"
-          style={{ textShadow: `0 0 30px ${currentWinner.color}` }}
+          className="font-display text-4xl font-extrabold mb-3"
+          style={{ color: currentWinner.color }}
         >
           {currentWinner.name}
         </h2>
 
         {currentWinner.quantity > 0 && (
-          <p className="text-gray-400 text-sm mb-6">
-            Còn lại: <span className="text-white font-bold">{currentWinner.quantity - 1}</span> giải
+          <p className="text-cocoa-500 text-sm mb-6">
+            Còn lại <span className="text-cocoa-900 font-bold">{currentWinner.quantity - 1}</span> phần quà
           </p>
         )}
 
         <button
           onClick={handleClose}
-          className="mt-2 px-8 py-3 rounded-full font-bold text-gray-900 transition-all hover:scale-105 active:scale-95 text-lg"
-          style={{ background: `linear-gradient(135deg, ${currentWinner.color}, #ffd700)` }}
+          className="mt-2 px-8 py-3 rounded-full font-display font-bold text-cream-50 text-lg transition-all hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] shadow-soft"
+          style={{ background: currentWinner.color }}
         >
-          Nhận thưởng 🎁
+          Nhận quà
         </button>
 
-        <p className="mt-4 text-gray-600 text-xs">Nhấn bất kỳ đâu hoặc ESC để đóng</p>
+        <p className="mt-4 text-cocoa-500/70 text-xs">Nhấn ra ngoài hoặc phím ESC để đóng</p>
       </div>
     </div>
   )

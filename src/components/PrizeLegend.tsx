@@ -5,9 +5,9 @@ export default function PrizeLegend() {
   const totalWeight = prizes.reduce((s, p) => s + p.weight, 0)
 
   return (
-    <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
-      <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-3">
-        🎁 Bảng giải thưởng
+    <div className="bg-cream-50 rounded-3xl p-5 border border-cream-300/70 shadow-soft">
+      <h3 className="font-display text-base font-bold text-cocoa-900 mb-4">
+        Bảng giải thưởng
       </h3>
       <div className="space-y-2">
         {prizes.map((prize) => {
@@ -16,24 +16,29 @@ export default function PrizeLegend() {
           return (
             <div
               key={prize.id}
-              className={`flex items-center gap-3 rounded-xl px-3 py-2.5 transition-opacity ${depleted ? 'opacity-40' : ''}`}
-              style={{ background: `${prize.color}11`, border: `1px solid ${prize.color}33` }}
+              className={`flex items-center gap-3 rounded-2xl px-3 py-2.5 transition-opacity ${depleted ? 'opacity-45' : ''}`}
+              style={{ background: `${prize.color}12` }}
             >
-              <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: depleted ? '#4b5563' : prize.color }} />
-              <span className="text-base">{prize.emoji}</span>
+              <span
+                className="w-9 h-9 rounded-full grid place-items-center text-lg shrink-0"
+                style={{ background: depleted ? '#e4dccb' : `${prize.color}24` }}
+              >
+                {prize.emoji}
+              </span>
               <div className="flex-1 min-w-0">
-                <p className={`text-sm font-semibold truncate ${depleted ? 'line-through text-gray-500' : 'text-white'}`}>
+                <p className={`text-sm font-semibold truncate ${depleted ? 'line-through text-cocoa-500' : 'text-cocoa-900'}`}>
                   {prize.name}
                 </p>
-              </div>
-              <div className="text-right flex-shrink-0">
-                <p className="text-xs font-bold" style={{ color: depleted ? '#4b5563' : prize.color }}>
-                  {pct}%
-                </p>
-                <p className="text-xs text-gray-600">
-                  {depleted ? 'Hết' : prize.quantity === -1 ? '∞' : `còn ${prize.quantity}`}
+                <p className="text-xs text-cocoa-500">
+                  {depleted ? 'Đã trao hết' : prize.quantity === -1 ? 'Không giới hạn' : `còn ${prize.quantity} phần`}
                 </p>
               </div>
+              <span
+                className="text-sm font-display font-bold shrink-0"
+                style={{ color: depleted ? '#9a8c79' : prize.color }}
+              >
+                {pct}%
+              </span>
             </div>
           )
         })}
