@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useWheelStore, type Prize } from '../store/wheelStore'
+import { submitLeadToSheet } from '../utils/sheets'
 
 const ADMIN_PASSWORD = 'admin123'
 
@@ -43,6 +44,7 @@ export default function AdminPanel() {
     winners, clearWinners,
     adminUnlocked, setAdminUnlocked,
     soundEnabled, setSoundEnabled,
+    sheetsUrl, setSheetsUrl,
   } = useWheelStore()
 
   const [password, setPassword] = useState('')
@@ -50,6 +52,23 @@ export default function AdminPanel() {
   const [editing, setEditing] = useState<string | null>(null)
   const [form, setForm] = useState<PrizeFormData>(EMPTY_FORM)
   const [showAddForm, setShowAddForm] = useState(false)
+  const [sheetDraft, setSheetDraft] = useState(sheetsUrl)
+  const [sheetTest, setSheetTest] = useState<'idle' | 'sending' | 'sent'>('idle')
+
+  async function testSheet() {
+    if (!sheetDraft.trim()) return
+    setSheetsUrl(sheetDraft)
+    setSheetTest('sending')
+    await submitLeadToSheet(sheetDraft.trim(), {
+      name: 'Khách thử nghiệm',
+      phone: '0900000000',
+      prize: '🧪 Gửi thử kết nối',
+      consent: true,
+      timestamp: Date.now(),
+    })
+    setSheetTest('sent')
+    setTimeout(() => setSheetTest('idle'), 4000)
+  }
 
   function unlock() {
     if (password === ADMIN_PASSWORD) {
@@ -231,6 +250,56 @@ export default function AdminPanel() {
           + Thêm giải thưởng
         </button>
       )}
+
+      {/* Google Sheet sync */}
+      <div className="border-t border-cream-300/70 pt-4">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="font-display text-sm font-bold text-cocoa-900">Đồng bộ Google Sheet</h3>
+          <span
+            className={`text-xs px-2 py-0.5 rounded-full font-medium ${sheetsUrl ? 'bg-sage-50 text-sage-700' : 'bg-cream-200 text-cocoa-500'}`}
+          >
+            {sheetsUrl ? 'Đã kết nối' : 'Chưa kết nối'}
+          </span>
+        </div>
+        <p className="text-xs text-cocoa-500 mb-2 leading-snug">
+          Dán link Web App (Apps Script) để mỗi lượt nhận quà tự ghi vào Sheet. Xem hướng dẫn trong tệp
+          <span className="font-mono text-[11px] bg-cream-200 px-1 py-0.5 rounded mx-1">GOOGLE_SHEETS_SETUP.md</span>.
+        </p>
+        <input
+          value={sheetDraft}
+          onChange={(e) => setSheetDraft(e.target.value)}
+          onBlur={() => setSheetsUrl(sheetDraft)}
+          placeholder="https://script.google.com/macros/s/…/exec"
+          type="url"
+          className="w-full bg-cream-100 rounded-xl px-3 py-2.5 text-sm text-cocoa-900 placeholder-cocoa-500/60 outline-none border border-cream-300 focus:border-sage-500 transition-colors"
+        />
+        <div className="flex gap-2 mt-2">
+          <button
+            onClick={() => setSheetsUrl(sheetDraft)}
+            className="flex-1 text-xs bg-sage-600 hover:bg-sage-700 text-cream-50 px-3 py-2 rounded-lg transition-colors font-bold"
+          >
+            Lưu link
+          </button>
+          <button
+            onClick={testSheet}
+            disabled={!sheetDraft.trim() || sheetTest === 'sending'}
+            className="flex-1 text-xs bg-cream-200 hover:bg-cream-300 text-cocoa-700 px-3 py-2 rounded-lg transition-colors font-semibold disabled:opacity-50"
+          >
+            {sheetTest === 'sending' ? 'Đang gửi…' : sheetTest === 'sent' ? 'Đã gửi thử ✓' : 'Gửi thử'}
+          </button>
+          {sheetsUrl && (
+            <button
+              onClick={() => { setSheetsUrl(''); setSheetDraft('') }}
+              className="text-xs bg-clay-300/40 hover:bg-clay-300/70 text-clay-600 px-3 py-2 rounded-lg transition-colors font-medium"
+            >
+              Ngắt
+            </button>
+          )}
+        </div>
+        {sheetTest === 'sent' && (
+          <p className="text-xs text-sage-700 mt-2">Đã gửi 1 dòng thử — kiểm tra Google Sheet nhé!</p>
+        )}
+      </div>
 
       {/* Winners section */}
       {winners.length > 0 && (

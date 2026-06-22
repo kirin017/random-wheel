@@ -36,6 +36,7 @@ interface WheelState {
   showWinnerOverlay: boolean
   adminUnlocked: boolean
   soundEnabled: boolean
+  sheetsUrl: string
 
   setPrizes: (prizes: Prize[]) => void
   addPrize: (prize: Omit<Prize, 'id'>) => void
@@ -48,6 +49,7 @@ interface WheelState {
   clearWinners: () => void
   setAdminUnlocked: (v: boolean) => void
   setSoundEnabled: (v: boolean) => void
+  setSheetsUrl: (v: string) => void
   decrementPrize: (id: string) => void
 }
 
@@ -72,6 +74,7 @@ export const useWheelStore = create<WheelState>()(
       showWinnerOverlay: false,
       adminUnlocked: false,
       soundEnabled: true,
+      sheetsUrl: (import.meta.env.VITE_SHEETS_URL as string | undefined) ?? '',
 
       setPrizes: (prizes) => set({ prizes }),
       addPrize: (prize) =>
@@ -100,6 +103,7 @@ export const useWheelStore = create<WheelState>()(
       clearWinners: () => set({ winners: [] }),
       setAdminUnlocked: (v) => set({ adminUnlocked: v }),
       setSoundEnabled: (v) => set({ soundEnabled: v }),
+      setSheetsUrl: (v) => set({ sheetsUrl: v.trim() }),
       decrementPrize: (id) =>
         set((s) => ({
           prizes: s.prizes.map((p) =>

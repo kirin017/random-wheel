@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useWheelStore } from '../store/wheelStore'
 import { drawShareCard, canvasToBlob } from '../utils/shareCard'
+import { submitLeadToSheet } from '../utils/sheets'
 
 type Step = 'reveal' | 'form' | 'share'
 
@@ -16,6 +17,7 @@ export default function WinnerOverlay() {
     setCurrentWinner,
     recordWinner,
     decrementPrize,
+    sheetsUrl,
   } = useWheelStore()
 
   const [imgErr, setImgErr] = useState(false)
@@ -73,8 +75,20 @@ export default function WinnerOverlay() {
     if (Object.keys(nextErrors).length > 0) return
 
     const cleanPhone = phone.replace(/[\s.]/g, '')
-    recordWinner(winner, { name: name.trim(), phone: cleanPhone, consent })
+    const cleanName = name.trim()
+    recordWinner(winner, { name: cleanName, phone: cleanPhone, consent })
     if (winner.quantity > 0) decrementPrize(winner.id)
+
+    // Push to Google Sheet if configured (fire-and-forget; local record is the backup)
+    if (sheetsUrl) {
+      submitLeadToSheet(sheetsUrl, {
+        name: cleanName,
+        phone: cleanPhone,
+        prize: winner.name,
+        consent,
+        timestamp: Date.now(),
+      })
+    }
 
     setStep('share')
     setCardBuilding(true)
