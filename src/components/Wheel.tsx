@@ -110,12 +110,12 @@ export default function Wheel() {
 
   const available = prizes.filter((p) => p.quantity !== 0)
   const displayPrizes = available.length > 0 ? available : prizes
-  const totalWeight = displayPrizes.reduce((s, p) => s + p.weight, 0)
 
+  // Equal-sized segments (visual fairness). Win odds are still driven by weight in the spin logic.
+  const sweep = 360 / displayPrizes.length
   let currentAngle = 0
   const segments: { prize: Prize; start: number; end: number }[] = []
   for (const prize of displayPrizes) {
-    const sweep = (prize.weight / totalWeight) * 360
     segments.push({ prize, start: currentAngle, end: currentAngle + sweep })
     currentAngle += sweep
   }

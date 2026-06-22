@@ -23,16 +23,12 @@ export function calcTargetAngle(
   minSpins = 8,
 ): number {
   const available = prizes.filter((p) => p.quantity !== 0)
-  const totalWeight = available.reduce((sum, p) => sum + p.weight, 0)
   const prizeIndex = available.findIndex((p) => p.id === winner.id)
   if (prizeIndex === -1) return currentRotation
 
-  // Calculate the midpoint angle of the winning segment (wheel renders top-to-bottom)
-  let angle = 0
-  for (let i = 0; i < prizeIndex; i++) {
-    angle += (available[i]!.weight / totalWeight) * 360
-  }
-  const segmentSize = (winner.weight / totalWeight) * 360
+  // Segments are rendered equal-sized; match that geometry here so the pointer lands correctly.
+  const segmentSize = 360 / available.length
+  const angle = prizeIndex * segmentSize
   const midAngle = angle + segmentSize / 2
 
   // Pointer is at top (270° in standard coords, or we offset so it points at 0°)
