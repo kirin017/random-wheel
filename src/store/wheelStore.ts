@@ -17,6 +17,15 @@ export interface Winner {
   prizeName: string
   prizeEmoji: string
   timestamp: number
+  name?: string
+  phone?: string
+  consent?: boolean
+}
+
+export interface LeadInfo {
+  name: string
+  phone: string
+  consent: boolean
 }
 
 interface WheelState {
@@ -27,6 +36,7 @@ interface WheelState {
   showWinnerOverlay: boolean
   adminUnlocked: boolean
   soundEnabled: boolean
+  sheetsUrl: string
 
   setPrizes: (prizes: Prize[]) => void
   addPrize: (prize: Omit<Prize, 'id'>) => void
@@ -35,10 +45,11 @@ interface WheelState {
   setIsSpinning: (v: boolean) => void
   setCurrentWinner: (prize: Prize | null) => void
   setShowWinnerOverlay: (v: boolean) => void
-  recordWinner: (prize: Prize) => void
+  recordWinner: (prize: Prize, lead?: LeadInfo) => void
   clearWinners: () => void
   setAdminUnlocked: (v: boolean) => void
   setSoundEnabled: (v: boolean) => void
+  setSheetsUrl: (v: string) => void
   decrementPrize: (id: string) => void
 }
 
@@ -63,6 +74,7 @@ export const useWheelStore = create<WheelState>()(
       showWinnerOverlay: false,
       adminUnlocked: false,
       soundEnabled: true,
+      sheetsUrl: (import.meta.env.VITE_SHEETS_URL as string | undefined) ?? '',
 
       setPrizes: (prizes) => set({ prizes }),
       addPrize: (prize) =>
@@ -73,16 +85,25 @@ export const useWheelStore = create<WheelState>()(
       setIsSpinning: (v) => set({ isSpinning: v }),
       setCurrentWinner: (prize) => set({ currentWinner: prize }),
       setShowWinnerOverlay: (v) => set({ showWinnerOverlay: v }),
-      recordWinner: (prize) =>
+      recordWinner: (prize, lead) =>
         set((s) => ({
           winners: [
-            { id: Date.now().toString(), prizeName: prize.name, prizeEmoji: prize.emoji, timestamp: Date.now() },
+            {
+              id: Date.now().toString(),
+              prizeName: prize.name,
+              prizeEmoji: prize.emoji,
+              timestamp: Date.now(),
+              name: lead?.name,
+              phone: lead?.phone,
+              consent: lead?.consent,
+            },
             ...s.winners,
           ],
         })),
       clearWinners: () => set({ winners: [] }),
       setAdminUnlocked: (v) => set({ adminUnlocked: v }),
       setSoundEnabled: (v) => set({ soundEnabled: v }),
+      setSheetsUrl: (v) => set({ sheetsUrl: v.trim() }),
       decrementPrize: (id) =>
         set((s) => ({
           prizes: s.prizes.map((p) =>
