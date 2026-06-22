@@ -1,6 +1,7 @@
 import { useRef, useEffect } from 'react'
 import { useWheelStore, type Prize } from '../store/wheelStore'
 import { useSpin } from '../hooks/useSpin'
+import { BYT_LOGO_URL } from '../utils/brandAssets'
 
 function polarToCartesian(cx: number, cy: number, r: number, angleDeg: number) {
   const rad = ((angleDeg - 90) * Math.PI) / 180
@@ -25,14 +26,26 @@ interface SegmentProps {
 
 function Segment({ prize, startAngle, endAngle, cx, cy, r }: SegmentProps) {
   const mid = (startAngle + endAngle) / 2
-  const textR = r * 0.65
+  const segSpan = endAngle - startAngle
+  const textR = r * 0.62
   const textPos = polarToCartesian(cx, cy, textR, mid)
-  const emojiR = r * 0.82
-  const emojiPos = polarToCartesian(cx, cy, emojiR, mid)
+  const imgR = r * 0.83
+  const imgPos = polarToCartesian(cx, cy, imgR, mid)
   const textAngle = mid - 90
+  const clipId = `img-clip-${prize.id}`
+  const imgSize = 22
 
   return (
     <g>
+      {/* Clip path for circular product image badge */}
+      {prize.image && (
+        <defs>
+          <clipPath id={clipId}>
+            <circle cx={imgPos.x} cy={imgPos.y} r={imgSize / 2} />
+          </clipPath>
+        </defs>
+      )}
+
       <path
         d={buildSegmentPath(cx, cy, r, startAngle, endAngle)}
         fill={prize.quantity === 0 ? '#d8cdba' : prize.color}
@@ -40,25 +53,48 @@ function Segment({ prize, startAngle, endAngle, cx, cy, r }: SegmentProps) {
         strokeWidth="3"
         opacity={prize.quantity === 0 ? 0.55 : 1}
       />
+
       {/* Segment label */}
       <g transform={`translate(${textPos.x}, ${textPos.y}) rotate(${textAngle})`}>
         <text
           textAnchor="middle"
           dominantBaseline="middle"
           fill="white"
-          fontSize={endAngle - startAngle > 30 ? '11' : '8'}
+          fontSize={segSpan > 30 ? '11' : '8'}
           fontWeight="700"
           style={{ fontFamily: '"Be Vietnam Pro", sans-serif', textShadow: '0 1px 2px rgba(47,38,32,0.45)' }}
         >
           {prize.name.length > 12 ? prize.name.slice(0, 11) + '…' : prize.name}
         </text>
       </g>
-      {/* Emoji near rim */}
-      <g transform={`translate(${emojiPos.x}, ${emojiPos.y}) rotate(${textAngle})`}>
-        <text textAnchor="middle" dominantBaseline="middle" fontSize="14">
-          {prize.emoji}
-        </text>
-      </g>
+
+      {/* Product image badge or emoji near rim */}
+      {prize.image ? (
+        <>
+          <circle
+            cx={imgPos.x}
+            cy={imgPos.y}
+            r={imgSize / 2 + 2}
+            fill="white"
+            opacity="0.92"
+          />
+          <image
+            href={prize.image}
+            x={imgPos.x - imgSize / 2}
+            y={imgPos.y - imgSize / 2}
+            width={imgSize}
+            height={imgSize}
+            clipPath={`url(#${clipId})`}
+            preserveAspectRatio="xMidYMid slice"
+          />
+        </>
+      ) : (
+        <g transform={`translate(${imgPos.x}, ${imgPos.y}) rotate(${textAngle})`}>
+          <text textAnchor="middle" dominantBaseline="middle" fontSize="14">
+            {prize.emoji}
+          </text>
+        </g>
+      )}
     </g>
   )
 }
@@ -84,11 +120,9 @@ export default function Wheel() {
     currentAngle += sweep
   }
 
-  // Reset wheel CSS when not spinning (no transition on init)
   useEffect(() => {
     const el = wheelGroupRef.current
     if (!el || isSpinning) return
-    // Keep current transform but remove transition on next tick
     const id = setTimeout(() => {
       if (el) el.style.transition = 'none'
     }, 50)
@@ -97,7 +131,6 @@ export default function Wheel() {
 
   return (
     <div className="relative flex flex-col items-center gap-6">
-      {/* Outer glow ring */}
       <div className="relative">
         <div
           className={`absolute inset-0 rounded-full ${isSpinning ? 'pulse-ring' : ''}`}
@@ -110,32 +143,38 @@ export default function Wheel() {
           viewBox="0 0 500 500"
           className="wheel-shadow max-w-[min(90vw,500px)]"
         >
-          {/* Outer decorative ring (warm cream rim) */}
+          {/* Outer decorative rim */}
           <circle cx={cx} cy={cy} r={r + 14} fill="#fdfaf3" stroke="#ecdfc4" strokeWidth="3" />
           <circle cx={cx} cy={cy} r={r + 5} fill="none" stroke="#5f8a6c" strokeWidth="4" opacity="0.45" />
 
-          {/* Wheel segments */}
+          {/* Wheel group — rotates around cx,cy */}
           <g ref={wheelGroupRef} style={{ transformOrigin: `${cx}px ${cy}px` }}>
             {segments.map(({ prize, start, end }) => (
               <Segment key={prize.id} prize={prize} startAngle={start} endAngle={end} cx={cx} cy={cy} r={r} />
             ))}
-            {/* Center hub */}
-            <circle cx={cx} cy={cy} r={30} fill="#4c7257" stroke="#fdfaf3" strokeWidth="5" />
-            <text
-              x={cx}
-              y={cy + 1}
-              textAnchor="middle"
-              dominantBaseline="middle"
-              fontSize="15"
-              fontWeight="800"
-              fill="#fdfaf3"
-              style={{ fontFamily: '"Baloo 2", sans-serif' }}
-            >
-              BYT
-            </text>
+
+            {/* Center hub with BYT logo */}
+            <defs>
+              <clipPath id="hub-clip">
+                <circle cx={cx} cy={cy} r={34} />
+              </clipPath>
+            </defs>
+            <circle cx={cx} cy={cy} r={40} fill="white" stroke="#fdfaf3" strokeWidth="5" />
+            <circle cx={cx} cy={cy} r={40} fill="#4c7257" stroke="#fdfaf3" strokeWidth="5" opacity="0.15" />
+            <image
+              href={BYT_LOGO_URL}
+              x={cx - 34}
+              y={cy - 34}
+              width="68"
+              height="68"
+              clipPath="url(#hub-clip)"
+              preserveAspectRatio="xMidYMid meet"
+            />
+            {/* Fallback ring in case image doesn't load */}
+            <circle cx={cx} cy={cy} r={40} fill="none" stroke="#4c7257" strokeWidth="2.5" opacity="0.4" />
           </g>
 
-          {/* Pointer (top, fixed) — terracotta */}
+          {/* Pointer (top, fixed) */}
           <polygon
             points={`${cx - 13},${cy - r - 6} ${cx + 13},${cy - r - 6} ${cx},${cy - r + 22}`}
             fill="#b66639"

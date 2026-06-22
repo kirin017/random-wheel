@@ -4,6 +4,29 @@ import WinnerOverlay from './components/WinnerOverlay'
 import AdminPanel from './components/AdminPanel'
 import PrizeLegend from './components/PrizeLegend'
 import { useWheelStore } from './store/wheelStore'
+import { BYT_LOGO_URL } from './utils/brandAssets'
+
+function BYTMonogram() {
+  const [err, setErr] = useState(false)
+  if (err) {
+    return (
+      <div className="w-11 h-11 rounded-2xl bg-sage-600 text-cream-50 grid place-items-center font-display font-extrabold text-lg shadow-soft shrink-0">
+        BYT
+      </div>
+    )
+  }
+  return (
+    <div className="w-11 h-11 rounded-2xl bg-white overflow-hidden shadow-soft shrink-0 border border-cream-200">
+      <img
+        src={BYT_LOGO_URL}
+        alt="Bếp Yêu Thương"
+        className="w-full h-full object-contain p-0.5"
+        onError={() => setErr(true)}
+        decoding="async"
+      />
+    </div>
+  )
+}
 
 export default function App() {
   const { winners } = useWheelStore()
@@ -28,9 +51,7 @@ export default function App() {
       {/* Header */}
       <header className="border-b border-cream-300/70 px-5 sm:px-8 py-4 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="w-11 h-11 rounded-2xl bg-sage-600 text-cream-50 grid place-items-center font-display font-extrabold text-lg shadow-soft shrink-0">
-            BYT
-          </div>
+          <BYTMonogram />
           <div className="min-w-0">
             <h1 className="font-display text-xl sm:text-2xl font-extrabold text-cocoa-900 leading-tight truncate">
               Bếp Yêu Thương

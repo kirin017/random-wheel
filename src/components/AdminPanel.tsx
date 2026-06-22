@@ -3,13 +3,12 @@ import { useWheelStore, type Prize } from '../store/wheelStore'
 
 const ADMIN_PASSWORD = 'admin123'
 
-// Bếp Yêu Thương brand palette swatches
 const PRESET_COLORS = [
   '#b66639', '#cd7c4d', '#4c7257', '#6f9079', '#b58a3c',
   '#5f8a6c', '#d99468', '#3d5c47', '#eecb7e', '#473b30',
 ]
 
-const EMOJIS = ['🥇', '🥈', '🥉', '🎁', '🌿', '🍵', '🥗', '🍯', '🧺', '💚', '🥭', '🍶']
+const EMOJIS = ['🥇', '🥈', '🥉', '🎁', '🌿', '🍵', '🥗', '🍯', '🧺', '💚', '🥭', '🍶', '🥛', '🥤', '🍊', '⚡']
 
 interface PrizeFormData {
   name: string
@@ -17,9 +16,26 @@ interface PrizeFormData {
   quantity: string
   weight: string
   emoji: string
+  image: string
 }
 
-const EMPTY_FORM: PrizeFormData = { name: '', color: '#4c7257', quantity: '1', weight: '10', emoji: '🎁' }
+const EMPTY_FORM: PrizeFormData = { name: '', color: '#4c7257', quantity: '1', weight: '10', emoji: '🎁', image: '' }
+
+function PrizeThumbSmall({ src, emoji, color }: { src?: string; emoji: string; color: string }) {
+  const [err, setErr] = useState(false)
+  if (src && !err) {
+    return (
+      <div className="w-8 h-8 rounded-lg overflow-hidden shrink-0 border border-cream-300">
+        <img src={src} alt="" className="w-full h-full object-cover" onError={() => setErr(true)} decoding="async" loading="lazy" />
+      </div>
+    )
+  }
+  return (
+    <span className="w-8 h-8 rounded-full grid place-items-center text-base shrink-0" style={{ background: `${color}24` }}>
+      {emoji}
+    </span>
+  )
+}
 
 export default function AdminPanel() {
   const {
@@ -52,6 +68,7 @@ export default function AdminPanel() {
       quantity: prize.quantity.toString(),
       weight: prize.weight.toString(),
       emoji: prize.emoji,
+      image: prize.image ?? '',
     })
     setShowAddForm(false)
   }
@@ -64,6 +81,7 @@ export default function AdminPanel() {
       quantity: parseInt(form.quantity) || -1,
       weight: Math.max(1, parseInt(form.weight) || 10),
       emoji: form.emoji,
+      image: form.image.trim() || undefined,
     })
     setEditing(null)
   }
@@ -75,6 +93,7 @@ export default function AdminPanel() {
       quantity: parseInt(form.quantity) || -1,
       weight: Math.max(1, parseInt(form.weight) || 10),
       emoji: form.emoji,
+      image: form.image.trim() || undefined,
     })
     setForm(EMPTY_FORM)
     setShowAddForm(false)
@@ -150,25 +169,20 @@ export default function AdminPanel() {
       </div>
 
       {/* Prize list */}
-      <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+      <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
         {prizes.map((prize) => (
           <div key={prize.id} className="bg-cream-100 rounded-2xl p-3">
             {editing === prize.id ? (
               <PrizeForm form={form} setForm={setForm} onSave={saveEdit} onCancel={() => setEditing(null)} />
             ) : (
               <div className="flex items-center gap-3">
-                <span
-                  className="w-8 h-8 rounded-full grid place-items-center text-base shrink-0"
-                  style={{ background: `${prize.color}24` }}
-                >
-                  {prize.emoji}
-                </span>
+                <PrizeThumbSmall src={prize.image} emoji={prize.emoji} color={prize.color} />
                 <div className="flex-1 min-w-0">
                   <p className={`text-sm font-semibold truncate ${prize.quantity === 0 ? 'text-cocoa-500 line-through' : 'text-cocoa-900'}`}>
                     {prize.name}
                   </p>
                   <p className="text-xs text-cocoa-500">
-                    Số lượng: {prize.quantity === -1 ? 'không giới hạn' : prize.quantity} · Tỉ lệ: {prize.weight}
+                    SL: {prize.quantity === -1 ? '∞' : prize.quantity} · Tỉ lệ: {prize.weight}
                   </p>
                 </div>
                 <div className="flex gap-1.5">
@@ -280,13 +294,13 @@ function PrizeForm({ form, setForm, onSave, onCancel, saveLabel = 'Lưu' }: Priz
             {EMOJIS.map((e) => <option key={e} value={e}>{e}</option>)}
           </select>
         </div>
-        <div className="flex flex-col gap-1">
+        <div>
           <input
             value={form.quantity}
             onChange={(e) => setForm({ ...form, quantity: e.target.value })}
-            placeholder="Số lượng"
+            placeholder="Số lượng (-1 = ∞)"
             type="number"
-            className="bg-cream-50 rounded-xl px-3 py-2.5 text-sm text-cocoa-900 placeholder-cocoa-500/60 outline-none border border-cream-300 focus:border-sage-500 transition-colors"
+            className="w-full bg-cream-50 rounded-xl px-3 py-2.5 text-sm text-cocoa-900 placeholder-cocoa-500/60 outline-none border border-cream-300 focus:border-sage-500 transition-colors"
           />
         </div>
         <div className="col-span-2 flex items-center gap-2">
@@ -298,8 +312,15 @@ function PrizeForm({ form, setForm, onSave, onCancel, saveLabel = 'Lưu' }: Priz
             min="1"
             className="flex-1 bg-cream-50 rounded-xl px-3 py-2.5 text-sm text-cocoa-900 placeholder-cocoa-500/60 outline-none border border-cream-300 focus:border-sage-500 transition-colors"
           />
-          <span className="text-xs text-cocoa-500 shrink-0">Số càng lớn, cơ hội trúng càng cao</span>
+          <span className="text-xs text-cocoa-500 shrink-0">Số lớn = cơ hội cao</span>
         </div>
+        <input
+          value={form.image}
+          onChange={(e) => setForm({ ...form, image: e.target.value })}
+          placeholder="URL ảnh sản phẩm (tuỳ chọn)"
+          type="url"
+          className="col-span-2 bg-cream-50 rounded-xl px-3 py-2.5 text-sm text-cocoa-900 placeholder-cocoa-500/60 outline-none border border-cream-300 focus:border-sage-500 transition-colors"
+        />
       </div>
       <div className="flex gap-2 justify-end">
         <button onClick={onCancel} className="px-3.5 py-2 bg-cream-200 hover:bg-cream-300 text-cocoa-700 rounded-xl text-xs font-semibold transition-colors">Hủy</button>

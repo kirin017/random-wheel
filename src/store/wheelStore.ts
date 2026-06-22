@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { menuImg } from '../utils/brandAssets'
 
 export interface Prize {
   id: string
@@ -8,6 +9,7 @@ export interface Prize {
   quantity: number
   weight: number
   emoji: string
+  image?: string
 }
 
 export interface Winner {
@@ -41,11 +43,14 @@ interface WheelState {
 }
 
 const DEFAULT_PRIZES: Prize[] = [
-  { id: '1', name: 'Giải Nhất', color: '#b66639', quantity: 1, weight: 5, emoji: '🥇' },
-  { id: '2', name: 'Giải Nhì', color: '#4c7257', quantity: 2, weight: 10, emoji: '🥈' },
-  { id: '3', name: 'Giải Ba', color: '#b58a3c', quantity: 3, weight: 15, emoji: '🥉' },
-  { id: '4', name: 'Quà Tặng', color: '#cd7c4d', quantity: 10, weight: 30, emoji: '🎁' },
-  { id: '5', name: 'Lành Hơn Mỗi Ngày', color: '#6f9079', quantity: -1, weight: 40, emoji: '🌿' },
+  { id: '1', name: 'Sữa Hạt Cao Cấp', color: '#b66639', quantity: 1, weight: 5, emoji: '🥛', image: menuImg('sữa hạt cao cấp.png') },
+  { id: '2', name: 'Set Hạt Lành 14 Ngày', color: '#4c7257', quantity: 1, weight: 5, emoji: '🧺', image: menuImg('hạt lành_set 14 ngày.png') },
+  { id: '3', name: 'Detox Chạm Lành', color: '#6f9079', quantity: 3, weight: 10, emoji: '🌿', image: menuImg('detox_chạm lành.png') },
+  { id: '4', name: 'Smoothie No Lâu', color: '#cd7c4d', quantity: 5, weight: 15, emoji: '🥤', image: menuImg('smoothie no lâu.png') },
+  { id: '5', name: 'Sữa Hạt Daily', color: '#5f8a6c', quantity: 8, weight: 25, emoji: '🥛', image: menuImg('sữa hạt daily.png') },
+  { id: '6', name: 'Nước Ép Tươi', color: '#b58a3c', quantity: 8, weight: 25, emoji: '🍊', image: menuImg('nước ép_mặt 1.png') },
+  { id: '7', name: 'Ginger Shot', color: '#d99468', quantity: 10, weight: 30, emoji: '⚡', image: menuImg('T2_GINGER SHOT.png') },
+  { id: '8', name: 'Thử Lần Sau Nhé!', color: '#9a8c79', quantity: -1, weight: 40, emoji: '💚' },
 ]
 
 export const useWheelStore = create<WheelState>()(
@@ -85,6 +90,6 @@ export const useWheelStore = create<WheelState>()(
           ),
         })),
     }),
-    { name: 'random-wheel-storage' },
+    { name: 'random-wheel-v2' },
   ),
 )
