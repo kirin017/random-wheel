@@ -1,9 +1,11 @@
-import { useRef, useEffect } from 'react'
+import { useRef, useEffect, useState } from 'react'
+import type { KeyboardEvent as ReactKeyboardEvent } from 'react'
 import { useWheelStore, type Prize } from '../store/wheelStore'
 import { useSpin } from '../hooks/useSpin'
 import { BYT_LOGO_URL } from '../utils/brandAssets'
 import { BRAND_COLORS, readableTextForHex } from '../utils/brandPalette'
 import { getWheelSegmentEntries } from '../utils/wheelSegments'
+import { getPrizeShortName } from '../utils/prizeLabels'
 
 function polarToCartesian(cx: number, cy: number, r: number, angleDeg: number) {
   const rad = ((angleDeg - 90) * Math.PI) / 180
@@ -21,14 +23,40 @@ interface SegmentProps {
   prize: Prize
   segmentKey: string
   displayColor: string
+  shortName: string
   startAngle: number
   endAngle: number
   cx: number
   cy: number
   r: number
+  tooltipAnchor: { x: number; y: number }
+  isActive: boolean
+  onActivate: (segment: ActiveSegment) => void
+  onDeactivate: (segmentKey: string) => void
 }
 
-function Segment({ prize, segmentKey, displayColor, startAngle, endAngle, cx, cy, r }: SegmentProps) {
+interface ActiveSegment {
+  prize: Prize
+  segmentKey: string
+  displayColor: string
+  tooltipAnchor: { x: number; y: number }
+}
+
+function Segment({
+  prize,
+  segmentKey,
+  displayColor,
+  shortName,
+  startAngle,
+  endAngle,
+  cx,
+  cy,
+  r,
+  tooltipAnchor,
+  isActive,
+  onActivate,
+  onDeactivate,
+}: SegmentProps) {
   const mid = (startAngle + endAngle) / 2
   const segSpan = endAngle - startAngle
   const textR = r * 0.62
@@ -41,9 +69,31 @@ function Segment({ prize, segmentKey, displayColor, startAngle, endAngle, cx, cy
   const renderedColor = prize.quantity === 0 ? BRAND_COLORS.line : displayColor
   const labelColor = prize.quantity === 0 ? BRAND_COLORS.muted : readableTextForHex(renderedColor)
   const labelShadow = labelColor === BRAND_COLORS.surface ? '0 1px 2px rgba(23,35,31,0.45)' : 'none'
+  const activeSegment = { prize, segmentKey, displayColor: renderedColor, tooltipAnchor }
+
+  function handleKeyDown(event: ReactKeyboardEvent<SVGGElement>) {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault()
+      onActivate(activeSegment)
+    }
+  }
 
   return (
-    <g>
+    <g
+      role="button"
+      tabIndex={0}
+      aria-label={`${prize.name}. ${prize.quantity > 0 ? `Còn ${prize.quantity} phần` : 'Đã hết quà'}`}
+      className="cursor-pointer outline-none"
+      onPointerEnter={() => onActivate(activeSegment)}
+      onPointerLeave={(event) => {
+        if (event.pointerType !== 'touch') onDeactivate(segmentKey)
+      }}
+      onFocus={() => onActivate(activeSegment)}
+      onBlur={() => onDeactivate(segmentKey)}
+      onClick={() => onActivate(activeSegment)}
+      onKeyDown={handleKeyDown}
+    >
+      <title>{prize.name}</title>
       {/* Clip path for circular product image badge */}
       {prize.image && (
         <defs>
@@ -57,7 +107,7 @@ function Segment({ prize, segmentKey, displayColor, startAngle, endAngle, cx, cy
         d={buildSegmentPath(cx, cy, r, startAngle, endAngle)}
         fill={renderedColor}
         stroke={BRAND_COLORS.cream}
-        strokeWidth="3"
+        strokeWidth={isActive ? '5' : '3'}
         opacity={prize.quantity === 0 ? 0.55 : 1}
       />
 
@@ -71,7 +121,7 @@ function Segment({ prize, segmentKey, displayColor, startAngle, endAngle, cx, cy
           fontWeight="700"
           style={{ fontFamily: '"Be Vietnam Pro", sans-serif', textShadow: labelShadow }}
         >
-          {prize.name.length > 12 ? prize.name.slice(0, 11) + '…' : prize.name}
+          {shortName}
         </text>
       </g>
 
@@ -106,10 +156,56 @@ function Segment({ prize, segmentKey, displayColor, startAngle, endAngle, cx, cy
   )
 }
 
+function ProductInfoCard({ segment }: { segment: ActiveSegment }) {
+  const { prize, displayColor, tooltipAnchor } = segment
+  const [imgErr, setImgErr] = useState(false)
+  const left = `${(Math.min(Math.max(tooltipAnchor.x, 160), 340) / 500) * 100}%`
+  const top = `${(Math.min(Math.max(tooltipAnchor.y, 115), 385) / 500) * 100}%`
+
+  return (
+    <div
+      className="pointer-events-none absolute z-30 w-56 max-w-[calc(100vw-2rem)] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-2xl border border-brand-line bg-white/95 text-left shadow-[0_18px_40px_rgb(23_35_31_/_0.18)] backdrop-blur-md animate-fade-in"
+      style={{ left, top }}
+      role="status"
+      aria-live="polite"
+    >
+      <div className="flex gap-3 p-3">
+        <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-brand-line bg-brand-mint grid place-items-center">
+          {prize.image && !imgErr ? (
+            <img
+              src={prize.image}
+              alt={prize.name}
+              className="h-full w-full object-cover"
+              onError={() => setImgErr(true)}
+              decoding="async"
+              loading="lazy"
+            />
+          ) : (
+            <span className="text-3xl">{prize.emoji}</span>
+          )}
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-brand-muted">
+            Quà từ BYT
+          </p>
+          <h3 className="mt-0.5 font-display text-base font-extrabold leading-tight text-brand-ink">
+            {prize.name}
+          </h3>
+          <div className="mt-2 flex items-center gap-2 text-xs font-semibold text-brand-muted">
+            <span className="h-2.5 w-2.5 rounded-full" style={{ background: displayColor }} />
+            <span>{prize.quantity > 0 ? `Còn ${prize.quantity} phần` : 'Đã hết quà'}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function Wheel() {
   const { prizes, isSpinning } = useWheelStore()
   const wheelGroupRef = useRef<SVGGElement>(null)
   const { spin } = useSpin(wheelGroupRef)
+  const [activeSegment, setActiveSegment] = useState<ActiveSegment | null>(null)
 
   const cx = 250
   const cy = 250
@@ -121,9 +217,28 @@ export default function Wheel() {
   // Equal-sized segments (visual fairness). Win odds are still driven by weight in the spin logic.
   const sweep = displayEntries.length > 0 ? 360 / displayEntries.length : 360
   let currentAngle = 0
-  const segments: { prize: Prize; segmentKey: string; displayColor: string; start: number; end: number }[] = []
+  const segments: {
+    prize: Prize
+    segmentKey: string
+    displayColor: string
+    shortName: string
+    tooltipAnchor: { x: number; y: number }
+    start: number
+    end: number
+  }[] = []
   for (const { prize, segmentKey, displayColor } of displayEntries) {
-    segments.push({ prize, segmentKey, displayColor, start: currentAngle, end: currentAngle + sweep })
+    const start = currentAngle
+    const end = currentAngle + sweep
+    const mid = (start + end) / 2
+    segments.push({
+      prize,
+      segmentKey,
+      displayColor,
+      shortName: getPrizeShortName(prize),
+      tooltipAnchor: polarToCartesian(cx, cy, r * 0.68, mid),
+      start,
+      end,
+    })
     currentAngle += sweep
   }
 
@@ -135,6 +250,18 @@ export default function Wheel() {
     }, 50)
     return () => clearTimeout(id)
   }, [isSpinning])
+
+  useEffect(() => {
+    if (isSpinning) setActiveSegment(null)
+  }, [isSpinning])
+
+  function activateSegment(segment: ActiveSegment) {
+    if (!isSpinning) setActiveSegment(segment)
+  }
+
+  function deactivateSegment(segmentKey: string) {
+    setActiveSegment((current) => current?.segmentKey === segmentKey ? null : current)
+  }
 
   return (
     <div className="relative flex flex-col items-center gap-6">
@@ -156,8 +283,23 @@ export default function Wheel() {
 
           {/* Wheel group — rotates around cx,cy */}
           <g ref={wheelGroupRef} style={{ transformOrigin: `${cx}px ${cy}px` }}>
-            {segments.map(({ prize, segmentKey, displayColor, start, end }) => (
-              <Segment key={segmentKey} prize={prize} segmentKey={segmentKey} displayColor={displayColor} startAngle={start} endAngle={end} cx={cx} cy={cy} r={r} />
+            {segments.map(({ prize, segmentKey, displayColor, shortName, tooltipAnchor, start, end }) => (
+              <Segment
+                key={segmentKey}
+                prize={prize}
+                segmentKey={segmentKey}
+                displayColor={displayColor}
+                shortName={shortName}
+                tooltipAnchor={tooltipAnchor}
+                startAngle={start}
+                endAngle={end}
+                cx={cx}
+                cy={cy}
+                r={r}
+                isActive={activeSegment?.segmentKey === segmentKey}
+                onActivate={activateSegment}
+                onDeactivate={deactivateSegment}
+              />
             ))}
 
             {/* Center hub with BYT logo */}
@@ -191,6 +333,7 @@ export default function Wheel() {
           />
           <circle cx={cx} cy={cy - r - 6} r="9" fill={BRAND_COLORS.tomatoDark} stroke={BRAND_COLORS.cream} strokeWidth="3" />
         </svg>
+        {activeSegment && <ProductInfoCard segment={activeSegment} />}
       </div>
 
       {/* Spin button */}
