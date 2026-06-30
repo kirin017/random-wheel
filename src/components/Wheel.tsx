@@ -2,6 +2,8 @@ import { useRef, useEffect } from 'react'
 import { useWheelStore, type Prize } from '../store/wheelStore'
 import { useSpin } from '../hooks/useSpin'
 import { BYT_LOGO_URL } from '../utils/brandAssets'
+import { BRAND_COLORS, readableTextForHex } from '../utils/brandPalette'
+import { getWheelSegmentEntries } from '../utils/wheelSegments'
 
 function polarToCartesian(cx: number, cy: number, r: number, angleDeg: number) {
   const rad = ((angleDeg - 90) * Math.PI) / 180
@@ -17,6 +19,8 @@ function buildSegmentPath(cx: number, cy: number, r: number, startAngle: number,
 
 interface SegmentProps {
   prize: Prize
+  segmentKey: string
+  displayColor: string
   startAngle: number
   endAngle: number
   cx: number
@@ -24,7 +28,7 @@ interface SegmentProps {
   r: number
 }
 
-function Segment({ prize, startAngle, endAngle, cx, cy, r }: SegmentProps) {
+function Segment({ prize, segmentKey, displayColor, startAngle, endAngle, cx, cy, r }: SegmentProps) {
   const mid = (startAngle + endAngle) / 2
   const segSpan = endAngle - startAngle
   const textR = r * 0.62
@@ -32,8 +36,11 @@ function Segment({ prize, startAngle, endAngle, cx, cy, r }: SegmentProps) {
   const imgR = r * 0.83
   const imgPos = polarToCartesian(cx, cy, imgR, mid)
   const textAngle = mid - 90
-  const clipId = `img-clip-${prize.id}`
+  const clipId = `img-clip-${segmentKey}`
   const imgSize = 22
+  const renderedColor = prize.quantity === 0 ? BRAND_COLORS.line : displayColor
+  const labelColor = prize.quantity === 0 ? BRAND_COLORS.muted : readableTextForHex(renderedColor)
+  const labelShadow = labelColor === BRAND_COLORS.surface ? '0 1px 2px rgba(23,35,31,0.45)' : 'none'
 
   return (
     <g>
@@ -48,8 +55,8 @@ function Segment({ prize, startAngle, endAngle, cx, cy, r }: SegmentProps) {
 
       <path
         d={buildSegmentPath(cx, cy, r, startAngle, endAngle)}
-        fill={prize.quantity === 0 ? '#d8cdba' : prize.color}
-        stroke="#fdfaf3"
+        fill={renderedColor}
+        stroke={BRAND_COLORS.cream}
         strokeWidth="3"
         opacity={prize.quantity === 0 ? 0.55 : 1}
       />
@@ -59,10 +66,10 @@ function Segment({ prize, startAngle, endAngle, cx, cy, r }: SegmentProps) {
         <text
           textAnchor="middle"
           dominantBaseline="middle"
-          fill="white"
+          fill={labelColor}
           fontSize={segSpan > 30 ? '11' : '8'}
           fontWeight="700"
-          style={{ fontFamily: '"Be Vietnam Pro", sans-serif', textShadow: '0 1px 2px rgba(47,38,32,0.45)' }}
+          style={{ fontFamily: '"Be Vietnam Pro", sans-serif', textShadow: labelShadow }}
         >
           {prize.name.length > 12 ? prize.name.slice(0, 11) + '…' : prize.name}
         </text>
@@ -109,14 +116,14 @@ export default function Wheel() {
   const r = 230
 
   const available = prizes.filter((p) => p.quantity !== 0)
-  const displayPrizes = available.length > 0 ? available : prizes
+  const displayEntries = getWheelSegmentEntries(prizes)
 
   // Equal-sized segments (visual fairness). Win odds are still driven by weight in the spin logic.
-  const sweep = 360 / displayPrizes.length
+  const sweep = displayEntries.length > 0 ? 360 / displayEntries.length : 360
   let currentAngle = 0
-  const segments: { prize: Prize; start: number; end: number }[] = []
-  for (const prize of displayPrizes) {
-    segments.push({ prize, start: currentAngle, end: currentAngle + sweep })
+  const segments: { prize: Prize; segmentKey: string; displayColor: string; start: number; end: number }[] = []
+  for (const { prize, segmentKey, displayColor } of displayEntries) {
+    segments.push({ prize, segmentKey, displayColor, start: currentAngle, end: currentAngle + sweep })
     currentAngle += sweep
   }
 
@@ -134,7 +141,7 @@ export default function Wheel() {
       <div className="relative">
         <div
           className={`absolute inset-0 rounded-full ${isSpinning ? 'pulse-ring' : ''}`}
-          style={{ background: 'radial-gradient(circle, rgba(95,138,108,0.18) 0%, transparent 70%)' }}
+          style={{ background: 'radial-gradient(circle, rgba(21,94,59,0.18) 0%, transparent 70%)' }}
         />
 
         <svg
@@ -144,13 +151,13 @@ export default function Wheel() {
           className="wheel-shadow max-w-[min(90vw,500px)]"
         >
           {/* Outer decorative rim */}
-          <circle cx={cx} cy={cy} r={r + 14} fill="#fdfaf3" stroke="#ecdfc4" strokeWidth="3" />
-          <circle cx={cx} cy={cy} r={r + 5} fill="none" stroke="#5f8a6c" strokeWidth="4" opacity="0.45" />
+          <circle cx={cx} cy={cy} r={r + 14} fill={BRAND_COLORS.cream} stroke={BRAND_COLORS.line} strokeWidth="3" />
+          <circle cx={cx} cy={cy} r={r + 5} fill="none" stroke={BRAND_COLORS.forest} strokeWidth="4" opacity="0.5" />
 
           {/* Wheel group — rotates around cx,cy */}
           <g ref={wheelGroupRef} style={{ transformOrigin: `${cx}px ${cy}px` }}>
-            {segments.map(({ prize, start, end }) => (
-              <Segment key={prize.id} prize={prize} startAngle={start} endAngle={end} cx={cx} cy={cy} r={r} />
+            {segments.map(({ prize, segmentKey, displayColor, start, end }) => (
+              <Segment key={segmentKey} prize={prize} segmentKey={segmentKey} displayColor={displayColor} startAngle={start} endAngle={end} cx={cx} cy={cy} r={r} />
             ))}
 
             {/* Center hub with BYT logo */}
@@ -159,8 +166,8 @@ export default function Wheel() {
                 <circle cx={cx} cy={cy} r={34} />
               </clipPath>
             </defs>
-            <circle cx={cx} cy={cy} r={40} fill="white" stroke="#fdfaf3" strokeWidth="5" />
-            <circle cx={cx} cy={cy} r={40} fill="#4c7257" stroke="#fdfaf3" strokeWidth="5" opacity="0.15" />
+            <circle cx={cx} cy={cy} r={40} fill="white" stroke={BRAND_COLORS.cream} strokeWidth="5" />
+            <circle cx={cx} cy={cy} r={40} fill={BRAND_COLORS.forest} stroke={BRAND_COLORS.cream} strokeWidth="5" opacity="0.15" />
             <image
               href={BYT_LOGO_URL}
               x={cx - 34}
@@ -171,18 +178,18 @@ export default function Wheel() {
               preserveAspectRatio="xMidYMid meet"
             />
             {/* Fallback ring in case image doesn't load */}
-            <circle cx={cx} cy={cy} r={40} fill="none" stroke="#4c7257" strokeWidth="2.5" opacity="0.4" />
+            <circle cx={cx} cy={cy} r={40} fill="none" stroke={BRAND_COLORS.forest} strokeWidth="2.5" opacity="0.4" />
           </g>
 
           {/* Pointer (top, fixed) */}
           <polygon
             points={`${cx - 13},${cy - r - 6} ${cx + 13},${cy - r - 6} ${cx},${cy - r + 22}`}
-            fill="#b66639"
-            stroke="#fdfaf3"
+            fill={BRAND_COLORS.tomato}
+            stroke={BRAND_COLORS.cream}
             strokeWidth="3"
-            filter="drop-shadow(0 3px 5px rgba(71,59,48,0.35))"
+            filter="drop-shadow(0 3px 5px rgba(23,35,31,0.35))"
           />
-          <circle cx={cx} cy={cy - r - 6} r="9" fill="#cd7c4d" stroke="#fdfaf3" strokeWidth="3" />
+          <circle cx={cx} cy={cy - r - 6} r="9" fill={BRAND_COLORS.tomatoDark} stroke={BRAND_COLORS.cream} strokeWidth="3" />
         </svg>
       </div>
 
@@ -195,7 +202,7 @@ export default function Wheel() {
           transition-all duration-200 select-none
           ${isSpinning || available.length === 0
             ? 'bg-cream-300 text-cocoa-500/70 cursor-not-allowed'
-            : 'bg-sage-600 text-cream-50 shadow-lift hover:bg-sage-700 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] cursor-pointer'
+            : 'bg-brand-tomato text-white shadow-lift hover:bg-clay-600 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] cursor-pointer'
           }
         `}
       >

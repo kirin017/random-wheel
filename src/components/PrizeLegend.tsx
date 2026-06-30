@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useWheelStore } from '../store/wheelStore'
+import { BRAND_COLORS } from '../utils/brandPalette'
 
 function PrizeThumb({ src, emoji, color, depleted }: { src?: string; emoji: string; color: string; depleted: boolean }) {
   const [err, setErr] = useState(false)
@@ -25,7 +26,7 @@ function PrizeThumb({ src, emoji, color, depleted }: { src?: string; emoji: stri
   return (
     <span
       className="w-10 h-10 rounded-full grid place-items-center text-xl shrink-0"
-      style={{ background: depleted ? '#e4dccb' : `${color}24` }}
+      style={{ background: depleted ? BRAND_COLORS.line : `${color}24` }}
     >
       {emoji}
     </span>
@@ -62,7 +63,7 @@ export default function PrizeLegend() {
               </div>
               <span
                 className="text-sm font-display font-bold shrink-0"
-                style={{ color: depleted ? '#9a8c79' : prize.color }}
+                style={{ color: depleted ? BRAND_COLORS.muted : prize.color }}
               >
                 {pct}%
               </span>

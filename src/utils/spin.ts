@@ -1,4 +1,5 @@
 import type { Prize } from '../store/wheelStore'
+import { getWheelSegmentEntries } from './wheelSegments'
 
 /** Pick a weighted random prize from available prizes (quantity > 0 or quantity === -1 = unlimited) */
 export function pickWeightedPrize(prizes: Prize[]): Prize | null {
@@ -22,12 +23,17 @@ export function calcTargetAngle(
   currentRotation: number,
   minSpins = 8,
 ): number {
-  const available = prizes.filter((p) => p.quantity !== 0)
-  const prizeIndex = available.findIndex((p) => p.id === winner.id)
-  if (prizeIndex === -1) return currentRotation
+  const segmentEntries = getWheelSegmentEntries(prizes)
+  const winnerSegmentIndexes = segmentEntries.reduce<number[]>((indexes, entry, index) => {
+    if (entry.prize.id === winner.id) indexes.push(index)
+    return indexes
+  }, [])
+  if (winnerSegmentIndexes.length === 0) return currentRotation
+
+  const prizeIndex = winnerSegmentIndexes[Math.floor(Math.random() * winnerSegmentIndexes.length)]
 
   // Segments are rendered equal-sized; match that geometry here so the pointer lands correctly.
-  const segmentSize = 360 / available.length
+  const segmentSize = 360 / segmentEntries.length
   const angle = prizeIndex * segmentSize
   const midAngle = angle + segmentSize / 2
 

@@ -1,4 +1,5 @@
 import { BYT_LOGO_URL } from './brandAssets'
+import { BRAND_COLORS } from './brandPalette'
 
 const W = 1080
 const H = 1080
@@ -53,28 +54,34 @@ export async function drawShareCard(canvas: HTMLCanvasElement, opts: ShareCardOp
     /* ignore */
   }
 
-  // Background — warm cream with a soft sage wash
+  // Background mirrors the storefront: cream, inset green, citrus light.
   const bg = ctx.createLinearGradient(0, 0, 0, H)
-  bg.addColorStop(0, '#fdfaf3')
-  bg.addColorStop(1, '#f3ede0')
+  bg.addColorStop(0, BRAND_COLORS.cream)
+  bg.addColorStop(0.52, BRAND_COLORS.inset)
+  bg.addColorStop(1, BRAND_COLORS.surface)
   ctx.fillStyle = bg
   ctx.fillRect(0, 0, W, H)
 
-  // Soft radial accents (sage top-left, honey bottom-right)
+  // Soft radial accents from the live brand palette.
   const r1 = ctx.createRadialGradient(120, 80, 0, 120, 80, 620)
-  r1.addColorStop(0, 'rgba(76,114,87,0.16)')
-  r1.addColorStop(1, 'rgba(76,114,87,0)')
+  r1.addColorStop(0, 'rgba(21,94,59,0.16)')
+  r1.addColorStop(1, 'rgba(21,94,59,0)')
   ctx.fillStyle = r1
   ctx.fillRect(0, 0, W, H)
   const r2 = ctx.createRadialGradient(W - 80, H - 80, 0, W - 80, H - 80, 640)
-  r2.addColorStop(0, 'rgba(238,203,126,0.22)')
-  r2.addColorStop(1, 'rgba(238,203,126,0)')
+  r2.addColorStop(0, 'rgba(246,199,68,0.24)')
+  r2.addColorStop(1, 'rgba(246,199,68,0)')
   ctx.fillStyle = r2
+  ctx.fillRect(0, 0, W, H)
+  const r3 = ctx.createRadialGradient(80, H - 120, 0, 80, H - 120, 520)
+  r3.addColorStop(0, 'rgba(233,79,55,0.10)')
+  r3.addColorStop(1, 'rgba(233,79,55,0)')
+  ctx.fillStyle = r3
   ctx.fillRect(0, 0, W, H)
 
   // Rounded inner frame
   const m = 48
-  ctx.strokeStyle = 'rgba(76,114,87,0.30)'
+  ctx.strokeStyle = 'rgba(21,94,59,0.30)'
   ctx.lineWidth = 4
   roundRect(ctx, m, m, W - 2 * m, H - 2 * m, 44)
   ctx.stroke()
@@ -86,8 +93,8 @@ export async function drawShareCard(canvas: HTMLCanvasElement, opts: ShareCardOp
   ctx.save()
   ctx.beginPath()
   ctx.arc(W / 2, discY, discR, 0, Math.PI * 2)
-  ctx.fillStyle = '#ffffff'
-  ctx.shadowColor = 'rgba(71,59,48,0.18)'
+  ctx.fillStyle = BRAND_COLORS.surface
+  ctx.shadowColor = 'rgba(21,94,59,0.16)'
   ctx.shadowBlur = 28
   ctx.shadowOffsetY = 8
   ctx.fill()
@@ -101,9 +108,9 @@ export async function drawShareCard(canvas: HTMLCanvasElement, opts: ShareCardOp
     const s = (discR - 10) * 2
     ctx.drawImage(logo, W / 2 - s / 2, discY - s / 2, s, s)
   } else {
-    ctx.fillStyle = '#4c7257'
+    ctx.fillStyle = BRAND_COLORS.forest
     ctx.fillRect(W / 2 - discR, discY - discR, discR * 2, discR * 2)
-    ctx.fillStyle = '#fdfaf3'
+    ctx.fillStyle = BRAND_COLORS.cream
     ctx.font = '700 76px "Baloo 2", sans-serif'
     ctx.textAlign = 'center'
     ctx.textBaseline = 'middle'
@@ -115,7 +122,7 @@ export async function drawShareCard(canvas: HTMLCanvasElement, opts: ShareCardOp
   ctx.textBaseline = 'alphabetic'
 
   // "TÔI VỪA TRÚNG" eyebrow
-  ctx.fillStyle = '#8a7b66'
+  ctx.fillStyle = BRAND_COLORS.muted
   ctx.font = '600 34px "Be Vietnam Pro", sans-serif'
   ctx.fillText('🎉  T Ô I   V Ừ A   T R Ú N G  🎉', W / 2, 430)
 
@@ -135,20 +142,20 @@ export async function drawShareCard(canvas: HTMLCanvasElement, opts: ShareCardOp
 
   // "tại Bếp Yêu Thương"
   const afterNameY = startY + (lines.length - 1) * lineH + 80
-  ctx.fillStyle = '#2f2620'
+  ctx.fillStyle = BRAND_COLORS.ink
   ctx.font = '600 46px "Be Vietnam Pro", sans-serif'
   ctx.fillText('tại Bếp Yêu Thương', W / 2, afterNameY)
 
   // Optional guest name
   if (guestName) {
-    ctx.fillStyle = '#8a7b66'
+    ctx.fillStyle = BRAND_COLORS.muted
     ctx.font = '500 36px "Be Vietnam Pro", sans-serif'
     ctx.fillText(`— ${guestName} —`, W / 2, afterNameY + 64)
   }
 
   // Divider dot row
   const dy = H - 180
-  ctx.fillStyle = 'rgba(76,114,87,0.55)'
+  ctx.fillStyle = 'rgba(21,94,59,0.55)'
   for (let i = -1; i <= 1; i++) {
     ctx.beginPath()
     ctx.arc(W / 2 + i * 34, dy, i === 0 ? 8 : 5, 0, Math.PI * 2)
@@ -156,7 +163,7 @@ export async function drawShareCard(canvas: HTMLCanvasElement, opts: ShareCardOp
   }
 
   // Tagline
-  ctx.fillStyle = '#4c7257'
+  ctx.fillStyle = BRAND_COLORS.forest
   ctx.font = '700 40px "Baloo 2", sans-serif'
   ctx.fillText('Ăn lành · Uống sạch · Sống yêu thương', W / 2, H - 110)
 }

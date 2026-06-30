@@ -18,13 +18,13 @@
 
 @layer base {
   body {
-    @apply bg-cream-100 text-cocoa-900 antialiased;
+    @apply bg-brand-inset text-brand-ink antialiased;
     background-image:
-      radial-gradient(ellipse 1400px 800px at -5% -12%, rgba(76, 114, 87, 0.26), transparent 54%),
-      radial-gradient(ellipse 1500px 750px at 110% -8%, rgba(238, 203, 126, 0.30), transparent 50%),
-      radial-gradient(ellipse 800px 600px at -2% 62%, rgba(182, 102, 57, 0.11), transparent 58%),
-      radial-gradient(ellipse 1200px 800px at 105% 100%, rgba(61, 92, 71, 0.18), transparent 52%),
-      radial-gradient(ellipse 700px 400px at 50% 108%, rgba(181, 138, 60, 0.13), transparent 55%);
+      linear-gradient(180deg, rgba(255, 248, 234, 0.82) 0%, rgba(246, 251, 247, 0.96) 42%, rgba(255, 255, 255, 0.92) 100%),
+      radial-gradient(ellipse 1400px 760px at -8% -12%, rgba(21, 94, 59, 0.20), transparent 56%),
+      radial-gradient(ellipse 920px 540px at 108% 2%, rgba(246, 199, 68, 0.30), transparent 52%),
+      radial-gradient(ellipse 780px 520px at -4% 72%, rgba(233, 79, 55, 0.10), transparent 58%),
+      radial-gradient(ellipse 980px 680px at 106% 100%, rgba(75, 170, 101, 0.16), transparent 54%);
     background-attachment: fixed;
   }
 

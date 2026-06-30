@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { menuImg } from '../utils/brandAssets'
+import { driveImg } from '../utils/brandAssets'
+import { BRAND_COLORS } from '../utils/brandPalette'
 
 export interface Prize {
   id: string
@@ -53,15 +54,22 @@ interface WheelState {
   decrementPrize: (id: string) => void
 }
 
+const DEFAULT_PRIZE_COLORS: Record<string, string> = {
+  'ginger-shot-any': BRAND_COLORS.tomatoDark,
+  'sua-hat-any': BRAND_COLORS.forest,
+  'detox-xanh': BRAND_COLORS.leaf,
+  'detox-do': BRAND_COLORS.tomato,
+  'smoothie-any': BRAND_COLORS.citrus,
+  'hu-mach-any': BRAND_COLORS.lineStrong,
+}
+
 const DEFAULT_PRIZES: Prize[] = [
-  { id: '1', name: 'Sữa Hạt Cao Cấp', color: '#b66639', quantity: 1, weight: 5, emoji: '🥛', image: menuImg('sữa hạt cao cấp.png') },
-  { id: '2', name: 'Set Hạt Lành 14 Ngày', color: '#4c7257', quantity: 1, weight: 5, emoji: '🧺', image: menuImg('hạt lành_set 14 ngày.png') },
-  { id: '3', name: 'Detox Chạm Lành', color: '#6f9079', quantity: 3, weight: 10, emoji: '🌿', image: menuImg('detox_chạm lành.png') },
-  { id: '4', name: 'Smoothie No Lâu', color: '#cd7c4d', quantity: 5, weight: 15, emoji: '🥤', image: menuImg('smoothie no lâu.png') },
-  { id: '5', name: 'Sữa Hạt Daily', color: '#5f8a6c', quantity: 8, weight: 25, emoji: '🥛', image: menuImg('sữa hạt daily.png') },
-  { id: '6', name: 'Nước Ép Tươi', color: '#b58a3c', quantity: 8, weight: 25, emoji: '🍊', image: menuImg('nước ép_mặt 1.png') },
-  { id: '7', name: 'Ginger Shot', color: '#d99468', quantity: 10, weight: 30, emoji: '⚡', image: menuImg('T2_GINGER SHOT.png') },
-  { id: '8', name: 'Thử Lần Sau Nhé!', color: '#9a8c79', quantity: -1, weight: 40, emoji: '💚' },
+  { id: 'ginger-shot-any', name: 'Ginger Shot Vị Bất Kỳ', color: DEFAULT_PRIZE_COLORS['ginger-shot-any'], quantity: 999, weight: 25, emoji: '⚡', image: driveImg('14Sw6OqnKCLuzzSctN_MTpOYpqLxY-zN7') },
+  { id: 'sua-hat-any', name: 'Sữa Hạt Vị Bất Kỳ', color: DEFAULT_PRIZE_COLORS['sua-hat-any'], quantity: 999, weight: 25, emoji: '🥛', image: driveImg('1eQZr-Biucevy52dPTO2dygL5FE2uYHiK') },
+  { id: 'detox-xanh', name: 'Detox Xanh', color: DEFAULT_PRIZE_COLORS['detox-xanh'], quantity: 999, weight: 20, emoji: '🌿', image: driveImg('1s8j6vSN0d1TGXTg1YnClEjj3Ggr6sjK8') },
+  { id: 'detox-do', name: 'Detox Đỏ', color: DEFAULT_PRIZE_COLORS['detox-do'], quantity: 999, weight: 20, emoji: '🍓', image: driveImg('1A_rDzjg8YSf5T-rI9ceeaxP7qJqEZRqO') },
+  { id: 'smoothie-any', name: 'Smoothie Vị Bất Kỳ', color: DEFAULT_PRIZE_COLORS['smoothie-any'], quantity: 999, weight: 7, emoji: '🥤', image: driveImg('1eMgxarXNiVrAv_KORItsR4ZIwbhw8zIw') },
+  { id: 'hu-mach-any', name: 'Hũ Mạch Vị Bất Kỳ', color: DEFAULT_PRIZE_COLORS['hu-mach-any'], quantity: 999, weight: 3, emoji: '🥣', image: driveImg('1YO7DHEJ3EZRPJWnBe3KLXEDXvJziN9Mt') },
 ]
 
 export const useWheelStore = create<WheelState>()(
@@ -111,6 +119,17 @@ export const useWheelStore = create<WheelState>()(
           ),
         })),
     }),
-    { name: 'random-wheel-v2' },
+    {
+      name: 'random-wheel-v2',
+      version: 4,
+      migrate: (persistedState) => {
+        const state = persistedState as Partial<WheelState>
+
+        return {
+          ...state,
+          prizes: DEFAULT_PRIZES,
+        }
+      },
+    },
   ),
 )

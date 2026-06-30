@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useWheelStore } from '../store/wheelStore'
 import { drawShareCard, canvasToBlob } from '../utils/shareCard'
 import { submitLeadToSheet } from '../utils/sheets'
+import { BRAND_COLORS } from '../utils/brandPalette'
 
 type Step = 'reveal' | 'form' | 'share'
 
@@ -148,7 +149,7 @@ export default function WinnerOverlay() {
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center animate-fade-in"
-      style={{ background: 'rgba(47,38,32,0.62)', backdropFilter: 'blur(8px)' }}
+      style={{ background: 'rgba(23,35,31,0.68)', backdropFilter: 'blur(8px)' }}
       onClick={handleClose}
     >
       <div
@@ -170,7 +171,7 @@ export default function WinnerOverlay() {
                 />
                 <div
                   className="absolute inset-0"
-                  style={{ background: 'linear-gradient(to bottom, rgba(47,38,32,0.08) 0%, transparent 40%, rgba(253,250,243,0.97) 88%)' }}
+                  style={{ background: `linear-gradient(to bottom, rgba(23,35,31,0.08) 0%, transparent 40%, ${BRAND_COLORS.cream}f7 88%)` }}
                 />
                 <div className="absolute bottom-0 left-0 right-0 h-1" style={{ background: winner.color }} />
               </div>

@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { useWheelStore, type Prize } from '../store/wheelStore'
 import { submitLeadToSheet } from '../utils/sheets'
+import { BRAND_COLORS } from '../utils/brandPalette'
 
 const ADMIN_PASSWORD = 'admin123'
 
 const PRESET_COLORS = [
-  '#b66639', '#cd7c4d', '#4c7257', '#6f9079', '#b58a3c',
-  '#5f8a6c', '#d99468', '#3d5c47', '#eecb7e', '#473b30',
+  BRAND_COLORS.tomato, BRAND_COLORS.forest, BRAND_COLORS.leaf, BRAND_COLORS.citrus, BRAND_COLORS.ink,
+  BRAND_COLORS.lineStrong, BRAND_COLORS.muted, BRAND_COLORS.tomatoDark, BRAND_COLORS.mint, BRAND_COLORS.cream,
 ]
 
 const EMOJIS = ['🥇', '🥈', '🥉', '🎁', '🌿', '🍵', '🥗', '🍯', '🧺', '💚', '🥭', '🍶', '🥛', '🥤', '🍊', '⚡']
@@ -20,7 +21,7 @@ interface PrizeFormData {
   image: string
 }
 
-const EMPTY_FORM: PrizeFormData = { name: '', color: '#4c7257', quantity: '1', weight: '10', emoji: '🎁', image: '' }
+const EMPTY_FORM: PrizeFormData = { name: '', color: BRAND_COLORS.forest, quantity: '1', weight: '10', emoji: '🎁', image: '' }
 
 function PrizeThumbSmall({ src, emoji, color }: { src?: string; emoji: string; color: string }) {
   const [err, setErr] = useState(false)
@@ -54,6 +55,7 @@ export default function AdminPanel() {
   const [showAddForm, setShowAddForm] = useState(false)
   const [sheetDraft, setSheetDraft] = useState(sheetsUrl)
   const [sheetTest, setSheetTest] = useState<'idle' | 'sending' | 'sent'>('idle')
+  const [panelOpen, setPanelOpen] = useState(adminUnlocked)
 
   async function testSheet() {
     if (!sheetDraft.trim()) return
@@ -73,10 +75,18 @@ export default function AdminPanel() {
   function unlock() {
     if (password === ADMIN_PASSWORD) {
       setAdminUnlocked(true)
+      setPanelOpen(true)
       setPwError(false)
     } else {
       setPwError(true)
     }
+  }
+
+  function lock() {
+    setAdminUnlocked(false)
+    setPanelOpen(false)
+    setPassword('')
+    setPwError(false)
   }
 
   function startEdit(prize: Prize) {
@@ -139,13 +149,46 @@ export default function AdminPanel() {
     a.click()
   }
 
+  if (!adminUnlocked && !panelOpen) {
+    return (
+      <div className="fixed bottom-4 right-4 z-[60]">
+        <button
+          type="button"
+          onClick={() => { setPanelOpen(true); setPwError(false) }}
+          aria-label="Mở quản lý"
+          aria-expanded={panelOpen}
+          className="h-10 w-10 grid place-items-center rounded-full border border-brand-line bg-cream-50/90 text-brand-forest shadow-soft backdrop-blur transition-colors hover:bg-brand-mint focus:outline-none focus:ring-2 focus:ring-brand-focus/70"
+          title="Quản lý"
+        >
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <rect x="5" y="11" width="14" height="10" rx="2" />
+            <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+          </svg>
+        </button>
+      </div>
+    )
+  }
+
   if (!adminUnlocked) {
     return (
-      <div className="bg-cream-50 rounded-3xl p-5 border border-cream-300/70 shadow-soft">
-        <h2 className="font-display text-base font-bold text-cocoa-900 mb-1">
-          Khu vực quản lý
-        </h2>
-        <p className="text-cocoa-500 text-xs mb-4">Dành cho ban tổ chức sự kiện</p>
+      <div className="fixed left-4 right-4 bottom-4 sm:left-auto sm:w-[340px] z-[60] bg-cream-50 rounded-3xl p-5 border border-cream-300/80 shadow-soft">
+        <div className="flex items-center justify-between gap-3 mb-4">
+          <h2 className="font-display text-base font-bold text-cocoa-900">
+            Xác thực quản lý
+          </h2>
+          <button
+            type="button"
+            onClick={() => { setPanelOpen(false); setPassword(''); setPwError(false) }}
+            className="w-8 h-8 grid place-items-center rounded-full text-cocoa-500 hover:text-cocoa-900 hover:bg-cream-200 transition-colors"
+            aria-label="Đóng quản lý"
+            title="Đóng"
+          >
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M18 6 6 18" />
+              <path d="m6 6 12 12" />
+            </svg>
+          </button>
+        </div>
         <div className="flex gap-2">
           <input
             type="password"
@@ -156,6 +199,7 @@ export default function AdminPanel() {
             className={`flex-1 bg-cream-100 rounded-xl px-3 py-2.5 text-sm text-cocoa-900 placeholder-cocoa-500/60 outline-none border ${pwError ? 'border-clay-500' : 'border-cream-300 focus:border-sage-500'} transition-colors`}
           />
           <button
+            type="button"
             onClick={unlock}
             className="bg-sage-600 hover:bg-sage-700 text-cream-50 font-display font-bold px-5 py-2.5 rounded-xl text-sm transition-colors"
           >
@@ -163,13 +207,12 @@ export default function AdminPanel() {
           </button>
         </div>
         {pwError && <p className="text-clay-600 text-xs mt-2">Mật khẩu chưa đúng, thử lại nhé.</p>}
-        <p className="text-cocoa-500/60 text-xs mt-3">Gợi ý: admin123</p>
       </div>
     )
   }
 
   return (
-    <div className="bg-cream-50 rounded-3xl p-5 border border-cream-300/70 shadow-soft space-y-5">
+    <div className="fixed left-4 right-4 bottom-4 sm:left-auto sm:right-4 sm:top-24 sm:bottom-auto sm:w-[380px] z-[60] max-h-[calc(100dvh-6rem)] overflow-y-auto bg-cream-50 rounded-3xl p-5 border border-cream-300/80 shadow-soft space-y-5">
       <div className="flex items-center justify-between">
         <h2 className="font-display text-base font-bold text-cocoa-900">
           Quản lý giải thưởng
@@ -191,7 +234,8 @@ export default function AdminPanel() {
             </svg>
           </button>
           <button
-            onClick={() => setAdminUnlocked(false)}
+            type="button"
+            onClick={lock}
             className="text-xs text-cocoa-500 hover:text-cocoa-900 transition-colors font-medium"
           >
             Khóa lại

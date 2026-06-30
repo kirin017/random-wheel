@@ -2,6 +2,7 @@ import { useRef, useCallback } from 'react'
 import confetti from 'canvas-confetti'
 import { useWheelStore } from '../store/wheelStore'
 import { pickWeightedPrize, calcTargetAngle } from '../utils/spin'
+import { BRAND_COLORS } from '../utils/brandPalette'
 
 export function useSpin(wheelRef: React.RefObject<SVGGElement | null>) {
   const rotationRef = useRef(0)
@@ -84,7 +85,7 @@ export function useSpin(wheelRef: React.RefObject<SVGGElement | null>) {
         particleCount: 150,
         spread: 80,
         origin: { y: 0.5 },
-        colors: [winner.color, '#ffd700', '#ffffff', '#ff6b6b', '#4ecdc4'],
+        colors: [winner.color, BRAND_COLORS.citrus, BRAND_COLORS.surface, BRAND_COLORS.tomato, BRAND_COLORS.leaf],
       })
     }, spinDuration)
   }, [isSpinning, prizes, wheelRef, setIsSpinning, setCurrentWinner, setShowWinnerOverlay, playSound])
