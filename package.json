@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "verify:shop-catalog": "node scripts/verify-shop-catalog.mjs"
+    "verify:shop-catalog": "node scripts/verify-shop-catalog.mjs",
+    "verify:sheet-payloads": "node scripts/verify-sheet-payloads.mjs"
   },
   "dependencies": {
     "@fontsource/baloo-2": "^5.1.0",
