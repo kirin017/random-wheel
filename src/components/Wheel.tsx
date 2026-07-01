@@ -57,6 +57,7 @@ function Segment({
   onActivate,
   onDeactivate,
 }: SegmentProps) {
+  const [imgErr, setImgErr] = useState(false)
   const mid = (startAngle + endAngle) / 2
   const segSpan = endAngle - startAngle
   const textR = r * 0.62
@@ -69,6 +70,7 @@ function Segment({
   const renderedColor = prize.quantity === 0 ? BRAND_COLORS.line : displayColor
   const labelColor = prize.quantity === 0 ? BRAND_COLORS.muted : readableTextForHex(renderedColor)
   const labelShadow = labelColor === BRAND_COLORS.surface ? '0 1px 2px rgba(23,35,31,0.45)' : 'none'
+  const hasImage = !!prize.image && !imgErr
   const activeSegment = { prize, segmentKey, displayColor: renderedColor, tooltipAnchor }
 
   function handleKeyDown(event: ReactKeyboardEvent<SVGGElement>) {
@@ -95,7 +97,7 @@ function Segment({
     >
       <title>{prize.name}</title>
       {/* Clip path for circular product image badge */}
-      {prize.image && (
+      {hasImage && (
         <defs>
           <clipPath id={clipId}>
             <circle cx={imgPos.x} cy={imgPos.y} r={imgSize / 2} />
@@ -126,7 +128,7 @@ function Segment({
       </g>
 
       {/* Product image badge or emoji near rim */}
-      {prize.image ? (
+      {hasImage ? (
         <>
           <circle
             cx={imgPos.x}
@@ -143,11 +145,35 @@ function Segment({
             height={imgSize}
             clipPath={`url(#${clipId})`}
             preserveAspectRatio="xMidYMid slice"
+            onError={() => setImgErr(true)}
           />
         </>
       ) : (
-        <g transform={`translate(${imgPos.x}, ${imgPos.y}) rotate(${textAngle})`}>
-          <text textAnchor="middle" dominantBaseline="middle" fontSize="14">
+        <g className="fallback-badge">
+          <circle
+            cx={imgPos.x}
+            cy={imgPos.y}
+            r={imgSize / 2 + 2}
+            fill="white"
+            opacity="0.92"
+          />
+          <circle
+            cx={imgPos.x}
+            cy={imgPos.y}
+            r={imgSize / 2}
+            fill={BRAND_COLORS.cream}
+            opacity="0.85"
+          />
+          <text
+            x={imgPos.x}
+            y={imgPos.y + 0.5}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            fontSize="12"
+            fontWeight="800"
+            fill={BRAND_COLORS.ink}
+            style={{ fontFamily: '"Be Vietnam Pro", sans-serif' }}
+          >
             {prize.emoji}
           </text>
         </g>
@@ -307,7 +333,7 @@ export default function Wheel() {
           <circle cx={cx} cy={cy} r={r + 5} fill="none" stroke={BRAND_COLORS.forest} strokeWidth="4" opacity="0.5" />
 
           {/* Wheel group — rotates around cx,cy */}
-          <g ref={wheelGroupRef} style={{ transformOrigin: `${cx}px ${cy}px` }}>
+          <g ref={wheelGroupRef}>
             {segments.map(({ prize, segmentKey, displayColor, shortName, tooltipAnchor, start, end }) => (
               <Segment
                 key={segmentKey}
@@ -361,7 +387,7 @@ export default function Wheel() {
           )}
 
           {/* Pointer (top, fixed) */}
-          <g ref={pointerRef} style={{ transformOrigin: `${cx}px ${cy - r - 6}px` }}>
+          <g ref={pointerRef}>
             <polygon
               points={`${cx - 13},${cy - r - 6} ${cx + 13},${cy - r - 6} ${cx},${cy - r + 22}`}
               fill={BRAND_COLORS.tomato}

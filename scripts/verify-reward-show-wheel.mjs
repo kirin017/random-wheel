@@ -40,6 +40,15 @@ assert.ok(wheelSource.includes('wheelShellRef'), 'Wheel should expose a shell re
 assert.ok(wheelSource.includes('winningSegmentKey'), 'Wheel should render winner glow by segment key')
 assert.ok(wheelSource.includes('winner-segment-glow'), 'Wheel should render a winner segment glow overlay')
 assert.ok(wheelSource.includes('center-burst'), 'Wheel should render a center burst effect')
+assert.ok(!wheelSource.includes('transformOrigin'), 'Wheel SVG groups should leave rotation origins to GSAP svgOrigin')
+const segmentFunctionSource = wheelSource.slice(
+  wheelSource.indexOf('function Segment('),
+  wheelSource.indexOf('function ProductInfoCard'),
+)
+assert.ok(segmentFunctionSource.includes('const [imgErr, setImgErr]'), 'Wheel segment product badges should track image load errors')
+assert.ok(segmentFunctionSource.includes('const hasImage'), 'Wheel segment product badges should render emoji fallback after image errors')
+assert.ok(segmentFunctionSource.includes('onError={() => setImgErr(true)}'), 'Wheel segment SVG images should fail closed to emoji badges')
+assert.ok(segmentFunctionSource.includes('fallback-badge'), 'Wheel segment fallback badges should have a polished framed state')
 
 const cssSource = readFileSync('src/index.css', 'utf8')
 assert.ok(cssSource.includes('.wheel-light-sweep::before'), 'light sweep should animate a clipped pseudo-element')
