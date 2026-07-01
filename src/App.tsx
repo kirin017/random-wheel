@@ -2,9 +2,22 @@ import { useState, useEffect } from 'react'
 import Wheel from './components/Wheel'
 import WinnerOverlay from './components/WinnerOverlay'
 import AdminPanel from './components/AdminPanel'
+import BrandLanding from './components/BrandLanding'
+import Shop from './components/Shop'
+import CartDrawer from './components/CartDrawer'
 import { useWheelStore } from './store/wheelStore'
+import { useShopStore } from './store/shopStore'
 import { BYT_LOGO_URL } from './utils/brandAssets'
 import { BRAND_COLORS } from './utils/brandPalette'
+import { formatVnd } from './utils/shopCatalog'
+
+type MainTab = 'home' | 'wheel' | 'shop'
+
+const TAB_ITEMS: { id: MainTab; label: string }[] = [
+  { id: 'home', label: 'Trang chủ' },
+  { id: 'wheel', label: 'Vòng quay' },
+  { id: 'shop', label: 'Mua hàng' },
+]
 
 function BotanicalBg() {
   return (
@@ -123,7 +136,11 @@ function BYTMonogram() {
 
 export default function App() {
   const { winners } = useWheelStore()
+  const { cartItems, setCartOpen, getCartSubtotal } = useShopStore()
   const [fullscreen, setFullscreen] = useState(false)
+  const [activeTab, setActiveTab] = useState<MainTab>('home')
+  const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0)
+  const cartSubtotal = getCartSubtotal()
 
   useEffect(() => {
     const handler = () => setFullscreen(!!document.fullscreenElement)
@@ -147,64 +164,110 @@ export default function App() {
       {/* All page content sits above the botanical/grain layers */}
       <div className="relative" style={{ zIndex: 1 }}>
 
-      {/* Header — frosted glass sticky bar */}
-      <header className="sticky top-0 z-40 border-b border-brand-cream/20 px-5 sm:px-8 py-4 flex items-center justify-between gap-4 text-brand-cream shadow-[0_14px_34px_rgb(23_35_31_/_0.20)]"
-        style={{ background: 'rgba(21,94,59,0.86)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)' }}
-      >
-        <div className="flex items-center gap-3 min-w-0">
-          <BYTMonogram />
-          <div className="min-w-0">
-            <h1 className="font-display text-xl sm:text-2xl font-extrabold text-brand-cream leading-tight truncate">
-              Bếp Yêu Thương
-            </h1>
-            <p className="text-brand-cream/80 text-xs sm:text-sm leading-tight truncate">
-              Ăn lành. Uống sạch. Sống yêu thương.
-            </p>
+        {/* Header — frosted glass sticky bar */}
+        <header
+          className="sticky top-0 z-40 border-b border-brand-cream/20 px-4 sm:px-8 py-4 text-brand-cream shadow-[0_14px_34px_rgb(23_35_31_/_0.20)]"
+          style={{ background: 'rgba(21,94,59,0.86)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)' }}
+        >
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3 min-w-0">
+              <BYTMonogram />
+              <div className="min-w-0">
+                <h1 className="font-display text-xl sm:text-2xl font-extrabold text-brand-cream leading-tight truncate">
+                  Bếp Yêu Thương
+                </h1>
+                <p className="text-brand-cream/80 text-xs sm:text-sm leading-tight truncate">
+                  Ăn lành. Uống sạch. Sống yêu thương.
+                </p>
+              </div>
+            </div>
+
+            <nav className="hidden md:flex items-center gap-1 rounded-full bg-brand-cream/[.12] p-1">
+              {TAB_ITEMS.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  className={`rounded-full px-4 py-2 text-sm font-bold transition-colors ${activeTab === item.id ? 'bg-brand-cream text-brand-forest' : 'text-brand-cream/82 hover:text-brand-cream'}`}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </nav>
+
+            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+              {winners.length > 0 && (
+                <div className="hidden sm:block text-xs sm:text-sm bg-brand-cream/[.14] border border-brand-cream/[.26] text-brand-cream px-3 py-1.5 rounded-full font-semibold whitespace-nowrap">
+                  {winners.length} lượt trúng
+                </div>
+              )}
+              <button
+                type="button"
+                onClick={() => setCartOpen(true)}
+                className={`relative rounded-full bg-brand-cream px-3 sm:px-4 py-2 text-xs sm:text-sm font-extrabold text-brand-forest shadow-soft ${cartCount > 0 ? 'cart-bounce' : ''}`}
+                aria-label="Mở giỏ hàng"
+              >
+                Giỏ {cartCount > 0 ? `(${cartCount})` : ''}
+                {cartSubtotal > 0 && <span className="ml-2 hidden lg:inline">{formatVnd(cartSubtotal)}</span>}
+              </button>
+              <button
+                onClick={toggleFullscreen}
+                className="w-9 h-9 grid place-items-center rounded-full text-brand-cream/80 hover:text-brand-forest hover:bg-brand-cream transition-colors"
+                title={fullscreen ? 'Thoát toàn màn hình' : 'Toàn màn hình'}
+                aria-label={fullscreen ? 'Thoát toàn màn hình' : 'Toàn màn hình'}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  {fullscreen ? (
+                    <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3M3 16h3a2 2 0 0 1 2 2v3m13-5h-3a2 2 0 0 0-2 2v3" />
+                  ) : (
+                    <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3m13-5v3a2 2 0 0 1-2 2h-3" />
+                  )}
+                </svg>
+              </button>
+            </div>
           </div>
-        </div>
-        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-          {winners.length > 0 && (
-            <div className="text-xs sm:text-sm bg-brand-cream/[.14] border border-brand-cream/[.26] text-brand-cream px-3 py-1.5 rounded-full font-semibold whitespace-nowrap">
-              {winners.length} lượt trúng
+
+          <nav className="mt-3 grid grid-cols-3 gap-1 rounded-full bg-brand-cream/[.12] p-1 md:hidden">
+            {TAB_ITEMS.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => setActiveTab(item.id)}
+                className={`rounded-full px-2 py-2 text-xs font-bold transition-colors ${activeTab === item.id ? 'bg-brand-cream text-brand-forest' : 'text-brand-cream/82'}`}
+              >
+                {item.label}
+              </button>
+            ))}
+          </nav>
+        </header>
+
+        {/* Main layout */}
+        <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+          {activeTab === 'home' && (
+            <BrandLanding onShop={() => setActiveTab('shop')} onWheel={() => setActiveTab('wheel')} />
+          )}
+
+          {activeTab === 'wheel' && (
+            <div className="flex flex-col items-center">
+              <p className="font-display text-2xl sm:text-3xl font-bold text-brand-ink text-center mb-1">
+                Vòng quay may mắn
+              </p>
+              {/* Decorative sage accent divider */}
+              <div className="flex items-center gap-2 mb-2">
+                <div className="h-px w-10 rounded-full bg-brand-leaf/60" />
+                <div className="w-1.5 h-1.5 rounded-full bg-brand-citrus" />
+                <div className="h-px w-10 rounded-full bg-brand-leaf/60" />
+              </div>
+              <p className="text-brand-muted text-sm text-center mb-7 max-w-sm text-balance">
+                Một lựa chọn tử tế hơn cho cả nhà. Quay để nhận quà từ Bếp Yêu Thương.
+              </p>
+              <Wheel />
             </div>
           )}
-          <button
-            onClick={toggleFullscreen}
-            className="w-9 h-9 grid place-items-center rounded-full text-brand-cream/80 hover:text-brand-forest hover:bg-brand-cream transition-colors"
-            title={fullscreen ? 'Thoát toàn màn hình' : 'Toàn màn hình'}
-            aria-label={fullscreen ? 'Thoát toàn màn hình' : 'Toàn màn hình'}
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              {fullscreen ? (
-                <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3M3 16h3a2 2 0 0 1 2 2v3m13-5h-3a2 2 0 0 0-2 2v3" />
-              ) : (
-                <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3m13-5v3a2 2 0 0 1-2 2h-3" />
-              )}
-            </svg>
-          </button>
-        </div>
-      </header>
 
-      {/* Main layout */}
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
-        <div className="flex flex-col items-center">
-          <p className="font-display text-2xl sm:text-3xl font-bold text-brand-ink text-center mb-1">
-            Vòng quay may mắn
-          </p>
-          {/* Decorative sage accent divider */}
-          <div className="flex items-center gap-2 mb-2">
-            <div className="h-px w-10 rounded-full bg-brand-leaf/60" />
-            <div className="w-1.5 h-1.5 rounded-full bg-brand-citrus" />
-            <div className="h-px w-10 rounded-full bg-brand-leaf/60" />
-          </div>
-          <p className="text-brand-muted text-sm text-center mb-7 max-w-sm text-balance">
-            Một lựa chọn tử tế hơn cho cả nhà. Quay để nhận quà từ Bếp Yêu Thương.
-          </p>
-          <Wheel />
-        </div>
-      </main>
+          {activeTab === 'shop' && <Shop />}
+        </main>
 
-      <AdminPanel />
+        <AdminPanel />
+        <CartDrawer />
 
       </div>{/* /relative content wrapper */}
 
