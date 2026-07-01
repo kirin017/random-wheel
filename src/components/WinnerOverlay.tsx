@@ -159,6 +159,7 @@ export default function WinnerOverlay() {
       <div
         role="dialog"
         aria-modal="true"
+        aria-label="Thông tin phần thưởng"
         className="relative animate-bounce-in max-h-[calc(100vh-2rem)] overflow-y-auto overflow-x-hidden rounded-[28px] max-w-sm w-full mx-4 bg-cream-50 shadow-lift"
         style={{ border: `2.5px solid ${winner.color}` }}
         onClick={(e) => e.stopPropagation()}
