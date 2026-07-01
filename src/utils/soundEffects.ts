@@ -6,6 +6,11 @@ const SAMPLE_RATE = 22050
 const soundCache: Partial<Record<SoundCue, Howl>> = {}
 let lastTickAt = 0
 
+function getNow(): number {
+  if (typeof performance !== 'undefined' && typeof performance.now === 'function') return performance.now()
+  return Date.now()
+}
+
 function writeString(view: DataView, offset: number, value: string): void {
   for (let i = 0; i < value.length; i += 1) {
     view.setUint8(offset + i, value.charCodeAt(i))
@@ -71,7 +76,7 @@ function getCue(cue: SoundCue): Howl {
 export function playSpinSound(cue: SoundCue, enabled: boolean): void {
   if (!enabled) return
   if (cue === 'tick') {
-    const now = performance.now()
+    const now = getNow()
     if (now - lastTickAt < 65) return
     lastTickAt = now
   }
@@ -88,5 +93,9 @@ export function stopSpinSounds(): void {
 }
 
 export function unloadSpinSounds(): void {
-  Object.values(soundCache).forEach((sound) => sound.unload())
+  for (const cue of Object.keys(soundCache) as SoundCue[]) {
+    soundCache[cue]?.unload()
+    delete soundCache[cue]
+  }
+  lastTickAt = 0
 }
