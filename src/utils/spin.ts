@@ -49,6 +49,32 @@ export function calcTargetAngle(
   return currentRotation + extraSpins + diff
 }
 
+export function normalizeRotation(rotation: number): number {
+  return ((rotation % 360) + 360) % 360
+}
+
+export function getPointerSegmentIndex(rotation: number, segmentCount: number): number {
+  if (segmentCount <= 0) return 0
+  const segmentSize = 360 / segmentCount
+  const pointerAngle = normalizeRotation(360 - normalizeRotation(rotation))
+  return Math.floor(pointerAngle / segmentSize) % segmentCount
+}
+
+export function getWinnerSegmentKey(
+  prizes: Prize[],
+  winner: Prize,
+  targetRotation: number,
+): string | null {
+  const segmentEntries = getWheelSegmentEntries(prizes)
+  if (segmentEntries.length === 0) return null
+
+  const targetIndex = getPointerSegmentIndex(targetRotation, segmentEntries.length)
+  const targetEntry = segmentEntries[targetIndex]
+  if (targetEntry?.prize.id === winner.id) return targetEntry.segmentKey
+
+  return segmentEntries.find((entry) => entry.prize.id === winner.id)?.segmentKey ?? null
+}
+
 export function formatTime(ts: number): string {
   return new Date(ts).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
 }
