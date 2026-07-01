@@ -6,6 +6,7 @@ globalThis.localStorage = {
   setItem: () => undefined,
   removeItem: () => undefined,
 }
+globalThis.window = { localStorage: globalThis.localStorage }
 
 const server = await createServer({
   appType: 'custom',
@@ -46,6 +47,28 @@ try {
   ])
   assert.equal(orderItems[0].lineTotal, 70000)
   assert.ok(summarizeOrderItems(orderItems).includes('2 x Ginger Shot - Vàng'))
+
+  const { useShopStore } = await server.ssrLoadModule('/src/store/shopStore.ts')
+  const store = useShopStore.getState()
+  assert.equal(store.products.length, 6)
+
+  store.clearCart()
+  store.addToCart('ginger-shot', 'vang')
+  store.addToCart('ginger-shot', 'vang')
+  store.addToCart('smoothie', 'no-lau')
+  assert.equal(useShopStore.getState().cartItems.length, 2)
+  assert.equal(useShopStore.getState().getCartSubtotal(), 149000)
+
+  const order = useShopStore.getState().createOrder({
+    customerName: 'Nguyen Van A',
+    phone: '0901234567',
+    address: '1 Le Loi, Quan 1',
+    preferredTime: 'Sang mai',
+    note: 'Giao lanh',
+  })
+  assert.equal(order.items.length, 2)
+  assert.equal(order.subtotal, 149000)
+  assert.equal(useShopStore.getState().cartItems.length, 0)
 } finally {
   await server.close()
 }
