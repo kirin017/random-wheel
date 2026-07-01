@@ -354,7 +354,7 @@ export default function Wheel() {
               stroke={winningSegment.displayColor}
               strokeWidth="8"
               transform={`rotate(${rotationRef.current} ${cx} ${cy})`}
-              style={{ color: winningSegment.displayColor }}
+              style={{ color: winningSegment.displayColor, opacity: 1 }}
             />
           )}
 
