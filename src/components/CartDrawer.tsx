@@ -105,16 +105,17 @@ export default function CartDrawer() {
                         <p className="text-sm font-semibold text-brand-muted">{variant.name} · {formatVnd(variant.price)}</p>
                         <p className="mt-1 text-sm font-extrabold text-brand-forest">{formatVnd(variant.price * item.quantity)}</p>
                       </div>
-                      <button onClick={() => removeFromCart(item.id)} className="self-start text-xs font-bold text-brand-muted hover:text-brand-tomato">Xóa</button>
+                      <button onClick={() => removeFromCart(item.id)} className="self-start text-xs font-bold text-brand-muted hover:text-brand-tomato" aria-label={`Xóa ${product.name} khỏi giỏ`}>Xóa</button>
                     </div>
                     <div className="mt-3 flex items-center gap-2">
-                      <button onClick={() => updateCartQuantity(item.id, item.quantity - 1)} className="h-8 w-8 rounded-full bg-white font-bold text-brand-forest">-</button>
+                      <button onClick={() => updateCartQuantity(item.id, item.quantity - 1)} className="h-8 w-8 rounded-full bg-white font-bold text-brand-forest" aria-label={`Giảm số lượng ${product.name}`}>-</button>
                       <span className="w-8 text-center text-sm font-extrabold">{item.quantity}</span>
-                      <button onClick={() => updateCartQuantity(item.id, item.quantity + 1)} className="h-8 w-8 rounded-full bg-white font-bold text-brand-forest">+</button>
+                      <button onClick={() => updateCartQuantity(item.id, item.quantity + 1)} className="h-8 w-8 rounded-full bg-white font-bold text-brand-forest" aria-label={`Tăng số lượng ${product.name}`}>+</button>
                       <input
                         value={item.note}
                         onChange={(event) => updateCartNote(item.id, event.target.value)}
                         placeholder="Ghi chú món"
+                        aria-label={`Ghi chú cho ${product.name}`}
                         className="min-w-0 flex-1 rounded-xl border border-brand-line bg-white px-3 py-2 text-sm outline-none focus:border-brand-forest"
                       />
                     </div>

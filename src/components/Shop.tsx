@@ -35,6 +35,7 @@ function ProductCard({ product }: { product: Product }) {
 
         <select
           value={variantId}
+          aria-label={`Chọn biến thể ${product.name}`}
           onChange={(event) => setVariantId(event.target.value)}
           className="w-full rounded-xl border border-brand-line bg-brand-inset px-3 py-2.5 text-sm font-semibold text-brand-ink outline-none focus:border-brand-forest"
         >
@@ -53,6 +54,7 @@ function ProductCard({ product }: { product: Product }) {
           <button
             onClick={() => variant && addToCart(product.id, variant.id)}
             disabled={!product.available || !variant}
+            aria-label={`Thêm ${product.name}${variant ? ` - ${variant.name}` : ''} vào giỏ`}
             className="rounded-full bg-brand-tomato px-5 py-2.5 text-sm font-extrabold text-white shadow-soft transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:bg-brand-line disabled:text-brand-muted"
           >
             {product.available ? 'Thêm' : 'Tạm hết'}
