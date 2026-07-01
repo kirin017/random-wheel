@@ -54,6 +54,11 @@ interface WheelState {
   decrementPrize: (id: string) => void
 }
 
+type PersistedWheelState = Pick<
+  WheelState,
+  'prizes' | 'winners' | 'adminUnlocked' | 'soundEnabled' | 'sheetsUrl'
+>
+
 const DEFAULT_PRIZE_COLORS: Record<string, string> = {
   'ginger-shot-any': BRAND_COLORS.tomatoDark,
   'sua-hat-any': BRAND_COLORS.forest,
@@ -121,15 +126,25 @@ export const useWheelStore = create<WheelState>()(
     }),
     {
       name: 'random-wheel-v2',
-      version: 4,
+      version: 5,
       migrate: (persistedState) => {
         const state = persistedState as Partial<WheelState>
 
         return {
-          ...state,
           prizes: DEFAULT_PRIZES,
+          winners: Array.isArray(state.winners) ? state.winners : [],
+          adminUnlocked: state.adminUnlocked ?? false,
+          soundEnabled: state.soundEnabled ?? true,
+          sheetsUrl: typeof state.sheetsUrl === 'string' ? state.sheetsUrl : '',
         }
       },
+      partialize: (state): PersistedWheelState => ({
+        prizes: state.prizes,
+        winners: state.winners,
+        adminUnlocked: state.adminUnlocked,
+        soundEnabled: state.soundEnabled,
+        sheetsUrl: state.sheetsUrl,
+      }),
     },
   ),
 )

@@ -275,7 +275,7 @@ export default function Wheel() {
     : null
 
   return (
-    <div className="relative flex flex-col items-center gap-6">
+    <div className="relative flex flex-col items-center gap-4 sm:gap-6">
       <div ref={wheelShellRef} className="relative wheel-shell">
         <div
           className={`absolute inset-0 rounded-full ${isSpinning ? 'pulse-ring' : ''}`}
@@ -300,7 +300,7 @@ export default function Wheel() {
           width="500"
           height="500"
           viewBox="0 0 500 500"
-          className="wheel-shadow max-w-[min(90vw,500px)]"
+          className="wheel-shadow max-w-[min(82vw,500px)] sm:max-w-[min(90vw,500px)]"
         >
           {/* Outer decorative rim */}
           <circle cx={cx} cy={cy} r={r + 14} fill={BRAND_COLORS.cream} stroke={BRAND_COLORS.line} strokeWidth="3" />
@@ -381,7 +381,7 @@ export default function Wheel() {
         onClick={spin}
         disabled={isSpinning || available.length === 0}
         className={`
-          relative px-11 py-4 rounded-full font-display text-xl font-extrabold tracking-wide
+          relative px-9 py-3.5 sm:px-11 sm:py-4 rounded-full font-display text-lg sm:text-xl font-extrabold tracking-wide
           transition-all duration-200 select-none
           ${isSpinning || available.length === 0
             ? 'bg-cream-300 text-cocoa-500/70 cursor-not-allowed'

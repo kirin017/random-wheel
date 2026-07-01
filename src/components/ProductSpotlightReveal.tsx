@@ -4,6 +4,7 @@ import { gsap } from 'gsap'
 import type { Prize } from '../store/wheelStore'
 import { BRAND_COLORS } from '../utils/brandPalette'
 import { prefersReducedMotion } from '../utils/reducedMotion'
+import { configureGsapRealTimeTicker } from '../utils/gsapTiming'
 import ParticleField from './ParticleField'
 
 interface ProductSpotlightRevealProps {
@@ -29,6 +30,7 @@ export default function ProductSpotlightReveal({ winner, onDone }: ProductSpotli
     const product = productRef.current
     const glow = glowRef.current
     const totalDuration = reducedMotion ? 0.9 : 2.85
+    configureGsapRealTimeTicker()
 
     const timeline = gsap.timeline()
 

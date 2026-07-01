@@ -4,6 +4,7 @@ import { createServer } from 'vite'
 
 const requiredFiles = [
   'src/utils/reducedMotion.ts',
+  'src/utils/gsapTiming.ts',
   'src/utils/haptics.ts',
   'src/utils/soundEffects.ts',
   'src/components/ParticleField.tsx',
@@ -24,6 +25,7 @@ assert.equal(packageJson.scripts?.['verify:reward-show-wheel'], 'node scripts/ve
 const useSpinSource = readFileSync('src/hooks/useSpin.ts', 'utf8')
 assert.ok(useSpinSource.includes("from 'gsap'"), 'useSpin should import GSAP')
 assert.ok(useSpinSource.includes('gsap.timeline'), 'useSpin should use a GSAP timeline')
+assert.ok(useSpinSource.includes('configureGsapRealTimeTicker'), 'useSpin should keep GSAP timelines time-based under throttled frames')
 assert.ok(useSpinSource.includes('getPointerSegmentIndex'), 'useSpin should tick from segment crossing')
 assert.ok(useSpinSource.includes('playSpinSound'), 'useSpin should play Howler-backed cues')
 assert.ok(useSpinSource.includes('vibrateTick'), 'useSpin should trigger throttled tick haptics')
@@ -39,6 +41,19 @@ assert.ok(wheelSource.includes('center-burst'), 'Wheel should render a center bu
 const overlaySource = readFileSync('src/components/WinnerOverlay.tsx', 'utf8')
 assert.ok(overlaySource.includes("type Step = 'spotlight' | 'reveal' | 'form' | 'share'"), 'WinnerOverlay should start with a spotlight step')
 assert.ok(overlaySource.includes('ProductSpotlightReveal'), 'WinnerOverlay should render ProductSpotlightReveal')
+
+const spotlightSource = readFileSync('src/components/ProductSpotlightReveal.tsx', 'utf8')
+assert.ok(spotlightSource.includes('configureGsapRealTimeTicker'), 'ProductSpotlightReveal should keep reveal timing stable under throttled frames')
+
+const storeSource = readFileSync('src/store/wheelStore.ts', 'utf8')
+const partializeSource = storeSource.match(/partialize:\s*\(state\)[\s\S]*?\n\s*\}\),/)?.[0] ?? ''
+assert.ok(storeSource.includes('version: 5'), 'wheel store should migrate persisted state after dropping transient fields')
+assert.ok(partializeSource.includes('prizes: state.prizes'), 'wheel store should persist prize configuration')
+assert.ok(partializeSource.includes('winners: state.winners'), 'wheel store should persist winner history')
+assert.ok(partializeSource.includes('soundEnabled: state.soundEnabled'), 'wheel store should persist durable settings')
+assert.ok(!partializeSource.includes('currentWinner'), 'current winner should not be persisted across reloads')
+assert.ok(!partializeSource.includes('showWinnerOverlay'), 'winner overlay should not be persisted across reloads')
+assert.ok(!partializeSource.includes('isSpinning'), 'spin progress should not be persisted across reloads')
 
 globalThis.localStorage = {
   getItem: () => null,

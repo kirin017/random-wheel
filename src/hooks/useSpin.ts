@@ -11,6 +11,7 @@ import {
 import { playSpinSound, stopSpinSounds, unloadSpinSounds } from '../utils/soundEffects'
 import { vibratePress, vibrateTick, vibrateWin } from '../utils/haptics'
 import { prefersReducedMotion } from '../utils/reducedMotion'
+import { configureGsapRealTimeTicker } from '../utils/gsapTiming'
 
 type SpinPhase = 'idle' | 'launching' | 'spinning' | 'decelerating' | 'settling' | 'spotlight'
 
@@ -148,6 +149,7 @@ export function useSpin({
     const rotationState = { value: startRotation }
 
     timelineRef.current?.kill()
+    configureGsapRealTimeTicker()
     cleanupVisuals()
     tickEffectsEnabledRef.current = !reducedMotion
     setIsSpinning(true)
