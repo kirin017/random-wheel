@@ -134,12 +134,16 @@
   .animate-bounce-in,
   .reveal-on-scroll,
   .marquee-track,
-  .cart-bounce,
-  .wheel-light-sweep.is-active,
-  .center-burst span {
+  .cart-bounce {
     animation: none !important;
     transition: none !important;
     transform: none !important;
     opacity: 1 !important;
+  }
+
+  .wheel-light-sweep.is-active,
+  .center-burst span {
+    animation: none !important;
+    opacity: 0 !important;
   }
 }
