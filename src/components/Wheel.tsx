@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState } from 'react'
-import type { KeyboardEvent as ReactKeyboardEvent } from 'react'
+import type { CSSProperties, KeyboardEvent as ReactKeyboardEvent } from 'react'
 import { useWheelStore, type Prize } from '../store/wheelStore'
 import { useSpin } from '../hooks/useSpin'
 import { BYT_LOGO_URL } from '../utils/brandAssets'
@@ -203,9 +203,14 @@ function ProductInfoCard({ segment }: { segment: ActiveSegment }) {
 
 export default function Wheel() {
   const { prizes, isSpinning } = useWheelStore()
+  const wheelShellRef = useRef<HTMLDivElement>(null)
   const wheelGroupRef = useRef<SVGGElement>(null)
-  const { spin } = useSpin(wheelGroupRef)
+  const pointerRef = useRef<SVGGElement>(null)
+  const spinButtonRef = useRef<HTMLButtonElement>(null)
   const [activeSegment, setActiveSegment] = useState<ActiveSegment | null>(null)
+  const [spinPhase, setSpinPhase] = useState<'idle' | 'launching' | 'spinning' | 'decelerating' | 'settling' | 'spotlight'>('idle')
+  const [winningSegmentKey, setWinningSegmentKey] = useState<string | null>(null)
+  const [centerBurstKey, setCenterBurstKey] = useState(0)
 
   const cx = 250
   const cy = 250
@@ -242,14 +247,16 @@ export default function Wheel() {
     currentAngle += sweep
   }
 
-  useEffect(() => {
-    const el = wheelGroupRef.current
-    if (!el || isSpinning) return
-    const id = setTimeout(() => {
-      if (el) el.style.transition = 'none'
-    }, 50)
-    return () => clearTimeout(id)
-  }, [isSpinning])
+  const { spin, rotationRef } = useSpin({
+    wheelRef: wheelGroupRef,
+    wheelShellRef,
+    pointerRef,
+    spinButtonRef,
+    segmentCount: segments.length,
+    onPhaseChange: setSpinPhase,
+    onWinnerSegmentChange: setWinningSegmentKey,
+    onCenterBurst: () => setCenterBurstKey((value) => value + 1),
+  })
 
   useEffect(() => {
     if (isSpinning) setActiveSegment(null)
@@ -263,13 +270,29 @@ export default function Wheel() {
     setActiveSegment((current) => current?.segmentKey === segmentKey ? null : current)
   }
 
+  const winningSegment = winningSegmentKey
+    ? segments.find((segment) => segment.segmentKey === winningSegmentKey)
+    : null
+
   return (
     <div className="relative flex flex-col items-center gap-6">
-      <div className="relative">
+      <div ref={wheelShellRef} className="relative wheel-shell">
         <div
           className={`absolute inset-0 rounded-full ${isSpinning ? 'pulse-ring' : ''}`}
           style={{ background: 'radial-gradient(circle, rgba(21,94,59,0.18) 0%, transparent 70%)' }}
         />
+        <div className={`pointer-events-none absolute inset-0 overflow-hidden rounded-full wheel-light-sweep ${spinPhase !== 'idle' ? 'is-active' : ''}`} />
+        <div key={centerBurstKey} className="pointer-events-none absolute inset-0 center-burst">
+          {Array.from({ length: 10 }).map((_, index) => (
+            <span
+              key={index}
+              style={{
+                '--burst-angle': `${index * 36}deg`,
+                '--burst-color': index % 2 === 0 ? BRAND_COLORS.citrus : BRAND_COLORS.leaf,
+              } as CSSProperties}
+            />
+          ))}
+        </div>
 
         <svg
           width="500"
@@ -323,21 +346,36 @@ export default function Wheel() {
             <circle cx={cx} cy={cy} r={40} fill="none" stroke={BRAND_COLORS.forest} strokeWidth="2.5" opacity="0.4" />
           </g>
 
+          {winningSegment && (
+            <path
+              className="winner-segment-glow"
+              d={buildSegmentPath(cx, cy, r, winningSegment.start, winningSegment.end)}
+              fill="none"
+              stroke={winningSegment.displayColor}
+              strokeWidth="8"
+              transform={`rotate(${rotationRef.current} ${cx} ${cy})`}
+              style={{ color: winningSegment.displayColor }}
+            />
+          )}
+
           {/* Pointer (top, fixed) */}
-          <polygon
-            points={`${cx - 13},${cy - r - 6} ${cx + 13},${cy - r - 6} ${cx},${cy - r + 22}`}
-            fill={BRAND_COLORS.tomato}
-            stroke={BRAND_COLORS.cream}
-            strokeWidth="3"
-            filter="drop-shadow(0 3px 5px rgba(23,35,31,0.35))"
-          />
-          <circle cx={cx} cy={cy - r - 6} r="9" fill={BRAND_COLORS.tomatoDark} stroke={BRAND_COLORS.cream} strokeWidth="3" />
+          <g ref={pointerRef} style={{ transformOrigin: `${cx}px ${cy - r - 6}px` }}>
+            <polygon
+              points={`${cx - 13},${cy - r - 6} ${cx + 13},${cy - r - 6} ${cx},${cy - r + 22}`}
+              fill={BRAND_COLORS.tomato}
+              stroke={BRAND_COLORS.cream}
+              strokeWidth="3"
+              filter="drop-shadow(0 3px 5px rgba(23,35,31,0.35))"
+            />
+            <circle cx={cx} cy={cy - r - 6} r="9" fill={BRAND_COLORS.tomatoDark} stroke={BRAND_COLORS.cream} strokeWidth="3" />
+          </g>
         </svg>
         {activeSegment && <ProductInfoCard segment={activeSegment} />}
       </div>
 
       {/* Spin button */}
       <button
+        ref={spinButtonRef}
         onClick={spin}
         disabled={isSpinning || available.length === 0}
         className={`
