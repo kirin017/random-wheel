@@ -7,6 +7,23 @@ import ProductSpotlightReveal from './ProductSpotlightReveal'
 
 type Step = 'spotlight' | 'reveal' | 'form' | 'share'
 
+const FOCUSABLE_SELECTOR = [
+  'button:not([disabled])',
+  'a[href]',
+  'input:not([disabled])',
+  'select:not([disabled])',
+  'textarea:not([disabled])',
+  '[tabindex]:not([tabindex="-1"])',
+].join(',')
+
+function getDialogFocusableElements(dialog: HTMLDivElement | null): HTMLElement[] {
+  if (!dialog) return []
+  return Array.from(dialog.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)).filter((element) => {
+    const ariaHidden = element.getAttribute('aria-hidden') === 'true'
+    return !ariaHidden && element.getClientRects().length > 0
+  })
+}
+
 function isValidVNPhone(raw: string): boolean {
   return /^0\d{9}$/.test(raw.replace(/[\s.]/g, ''))
 }
@@ -31,6 +48,8 @@ export default function WinnerOverlay() {
 
   const [cardUrl, setCardUrl] = useState<string | null>(null)
   const [cardBuilding, setCardBuilding] = useState(false)
+  const dialogRef = useRef<HTMLDivElement | null>(null)
+  const primaryActionRef = useRef<HTMLButtonElement | null>(null)
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
 
   const handleClose = useCallback(() => {
@@ -56,11 +75,56 @@ export default function WinnerOverlay() {
   useEffect(() => {
     if (!showWinnerOverlay) return
     const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Tab') {
+        const dialog = dialogRef.current
+        const focusableElements = getDialogFocusableElements(dialog)
+
+        if (!dialog || focusableElements.length === 0) {
+          e.preventDefault()
+          dialog?.focus({ preventScroll: true })
+          return
+        }
+
+        const firstElement = focusableElements[0]
+        const lastElement = focusableElements[focusableElements.length - 1]
+        const activeElement = document.activeElement
+
+        if (!dialog.contains(activeElement)) {
+          e.preventDefault()
+          firstElement.focus({ preventScroll: true })
+          return
+        }
+
+        if (e.shiftKey && activeElement === firstElement) {
+          e.preventDefault()
+          lastElement.focus({ preventScroll: true })
+          return
+        }
+
+        if (!e.shiftKey && activeElement === lastElement) {
+          e.preventDefault()
+          firstElement.focus({ preventScroll: true })
+        }
+      }
       if (e.key === 'Escape' && step !== 'spotlight') handleClose()
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
   }, [handleClose, showWinnerOverlay, step])
+
+  useEffect(() => {
+    if (!showWinnerOverlay) return
+    if (step === 'form') return
+
+    const focusTarget = step === 'reveal'
+      ? primaryActionRef.current ?? dialogRef.current
+      : dialogRef.current
+    const focusTimer = window.setTimeout(() => {
+      focusTarget?.focus({ preventScroll: true })
+    }, 0)
+
+    return () => window.clearTimeout(focusTimer)
+  }, [currentWinner?.id, showWinnerOverlay, step])
 
   if (!showWinnerOverlay || !currentWinner) return null
 
@@ -157,10 +221,12 @@ export default function WinnerOverlay() {
       onClick={step === 'spotlight' ? undefined : handleClose}
     >
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-label="Thông tin phần thưởng"
-        className="relative animate-bounce-in max-h-[calc(100vh-2rem)] overflow-y-auto overflow-x-hidden rounded-[28px] max-w-sm w-full mx-4 bg-cream-50 shadow-lift"
+        tabIndex={-1}
+        className="relative animate-bounce-in max-h-[calc(100vh-2rem)] overflow-y-auto overflow-x-hidden rounded-[28px] max-w-sm w-full mx-4 bg-cream-50 shadow-lift outline-none"
         style={{ border: `2.5px solid ${winner.color}` }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -219,6 +285,7 @@ export default function WinnerOverlay() {
               {isConsolation && <div className="mb-5" />}
 
               <button
+                ref={primaryActionRef}
                 onClick={goToForm}
                 className="px-10 py-3.5 rounded-full font-display font-bold text-cream-50 text-lg transition-all hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] shadow-soft"
                 style={{ background: winner.color }}

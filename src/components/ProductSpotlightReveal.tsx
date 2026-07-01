@@ -64,13 +64,17 @@ export default function ProductSpotlightReveal({ winner, onDone }: ProductSpotli
 
     if (!reducedMotion) {
       timeline.call(() => {
-        confetti({
-          particleCount: 120,
-          spread: 68,
-          origin: { y: 0.54 },
-          scalar: 0.9,
-          colors: [winner.color, BRAND_COLORS.citrus, BRAND_COLORS.surface, BRAND_COLORS.tomato, BRAND_COLORS.leaf],
-        })
+        try {
+          confetti({
+            particleCount: 120,
+            spread: 68,
+            origin: { y: 0.54 },
+            scalar: 0.9,
+            colors: [winner.color, BRAND_COLORS.citrus, BRAND_COLORS.surface, BRAND_COLORS.tomato, BRAND_COLORS.leaf],
+          })
+        } catch {
+          /* Decorative only; reveal flow must continue if the canvas effect fails. */
+        }
       }, undefined, 0.95)
     }
 

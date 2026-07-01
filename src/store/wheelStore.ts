@@ -77,6 +77,48 @@ const DEFAULT_PRIZES: Prize[] = [
   { id: 'hu-mach-any', name: 'Hũ Mạch Vị Bất Kỳ', color: DEFAULT_PRIZE_COLORS['hu-mach-any'], quantity: 999, weight: 3, emoji: '🥣', image: driveImg('1YO7DHEJ3EZRPJWnBe3KLXEDXvJziN9Mt') },
 ]
 
+function isPersistedPrize(value: unknown): value is Prize {
+  if (!value || typeof value !== 'object') return false
+  const prize = value as Partial<Prize>
+
+  return (
+    typeof prize.id === 'string' &&
+    typeof prize.name === 'string' &&
+    typeof prize.color === 'string' &&
+    typeof prize.quantity === 'number' &&
+    Number.isFinite(prize.quantity) &&
+    typeof prize.weight === 'number' &&
+    Number.isFinite(prize.weight) &&
+    typeof prize.emoji === 'string' &&
+    (typeof prize.image === 'undefined' || typeof prize.image === 'string')
+  )
+}
+
+export function migrateWheelState(persistedState: unknown): PersistedWheelState {
+  const state = (persistedState ?? {}) as Partial<WheelState>
+  const persistedPrizes = Array.isArray(state.prizes) && state.prizes.every(isPersistedPrize)
+    ? state.prizes
+    : DEFAULT_PRIZES
+
+  return {
+    prizes: persistedPrizes,
+    winners: Array.isArray(state.winners) ? state.winners : [],
+    adminUnlocked: state.adminUnlocked ?? false,
+    soundEnabled: state.soundEnabled ?? true,
+    sheetsUrl: typeof state.sheetsUrl === 'string' ? state.sheetsUrl : '',
+  }
+}
+
+export function partializeWheelState(state: WheelState): PersistedWheelState {
+  return {
+    prizes: state.prizes,
+    winners: state.winners,
+    adminUnlocked: state.adminUnlocked,
+    soundEnabled: state.soundEnabled,
+    sheetsUrl: state.sheetsUrl,
+  }
+}
+
 export const useWheelStore = create<WheelState>()(
   persist(
     (set) => ({
@@ -127,24 +169,8 @@ export const useWheelStore = create<WheelState>()(
     {
       name: 'random-wheel-v2',
       version: 5,
-      migrate: (persistedState) => {
-        const state = persistedState as Partial<WheelState>
-
-        return {
-          prizes: DEFAULT_PRIZES,
-          winners: Array.isArray(state.winners) ? state.winners : [],
-          adminUnlocked: state.adminUnlocked ?? false,
-          soundEnabled: state.soundEnabled ?? true,
-          sheetsUrl: typeof state.sheetsUrl === 'string' ? state.sheetsUrl : '',
-        }
-      },
-      partialize: (state): PersistedWheelState => ({
-        prizes: state.prizes,
-        winners: state.winners,
-        adminUnlocked: state.adminUnlocked,
-        soundEnabled: state.soundEnabled,
-        sheetsUrl: state.sheetsUrl,
-      }),
+      migrate: migrateWheelState,
+      partialize: partializeWheelState,
     },
   ),
 )

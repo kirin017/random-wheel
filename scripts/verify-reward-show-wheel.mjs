@@ -41,19 +41,21 @@ assert.ok(wheelSource.includes('center-burst'), 'Wheel should render a center bu
 const overlaySource = readFileSync('src/components/WinnerOverlay.tsx', 'utf8')
 assert.ok(overlaySource.includes("type Step = 'spotlight' | 'reveal' | 'form' | 'share'"), 'WinnerOverlay should start with a spotlight step')
 assert.ok(overlaySource.includes('ProductSpotlightReveal'), 'WinnerOverlay should render ProductSpotlightReveal')
+assert.ok(overlaySource.includes('dialogRef'), 'WinnerOverlay should move focus into the dialog')
+assert.ok(overlaySource.includes('primaryActionRef'), 'WinnerOverlay should focus the reveal action when it appears')
+assert.ok(overlaySource.includes('tabIndex={-1}'), 'WinnerOverlay dialog should be programmatically focusable')
+assert.ok(overlaySource.includes('getDialogFocusableElements'), 'WinnerOverlay should trap tab focus inside the dialog')
 
 const spotlightSource = readFileSync('src/components/ProductSpotlightReveal.tsx', 'utf8')
 assert.ok(spotlightSource.includes('configureGsapRealTimeTicker'), 'ProductSpotlightReveal should keep reveal timing stable under throttled frames')
+assert.ok(spotlightSource.includes('try') && spotlightSource.includes('confetti('), 'confetti should be fail-closed so it cannot block reveal flow')
+
+const particleSource = readFileSync('src/components/ParticleField.tsx', 'utf8')
+assert.ok(particleSource.includes('particlesReady'), 'ParticleField should disable itself if particle initialization fails')
 
 const storeSource = readFileSync('src/store/wheelStore.ts', 'utf8')
-const partializeSource = storeSource.match(/partialize:\s*\(state\)[\s\S]*?\n\s*\}\),/)?.[0] ?? ''
 assert.ok(storeSource.includes('version: 5'), 'wheel store should migrate persisted state after dropping transient fields')
-assert.ok(partializeSource.includes('prizes: state.prizes'), 'wheel store should persist prize configuration')
-assert.ok(partializeSource.includes('winners: state.winners'), 'wheel store should persist winner history')
-assert.ok(partializeSource.includes('soundEnabled: state.soundEnabled'), 'wheel store should persist durable settings')
-assert.ok(!partializeSource.includes('currentWinner'), 'current winner should not be persisted across reloads')
-assert.ok(!partializeSource.includes('showWinnerOverlay'), 'winner overlay should not be persisted across reloads')
-assert.ok(!partializeSource.includes('isSpinning'), 'spin progress should not be persisted across reloads')
+assert.ok(storeSource.includes('partializeWheelState'), 'wheel store should use an explicit partialize helper')
 
 globalThis.localStorage = {
   getItem: () => null,
@@ -75,7 +77,7 @@ try {
     normalizeRotation,
   } = await server.ssrLoadModule('/src/utils/spin.ts')
   const { getWheelSegmentEntries } = await server.ssrLoadModule('/src/utils/wheelSegments.ts')
-  const { useWheelStore } = await server.ssrLoadModule('/src/store/wheelStore.ts')
+  const { migrateWheelState, partializeWheelState, useWheelStore } = await server.ssrLoadModule('/src/store/wheelStore.ts')
 
   const prizes = useWheelStore.getState().prizes
   const winner = prizes[0]
@@ -86,6 +88,52 @@ try {
   assert.equal(normalizeRotation(725), 5)
   assert.equal(entries[index].prize.id, winner.id, 'target angle should land the selected winner under the pointer')
   assert.equal(getWinnerSegmentKey(prizes, winner, targetAngle), entries[index].segmentKey)
+
+  const customPrize = {
+    id: 'custom-detox',
+    name: 'Custom Detox',
+    color: '#123456',
+    quantity: 7,
+    weight: 13,
+    emoji: 'C',
+    image: 'https://example.com/custom.png',
+  }
+  const migrated = migrateWheelState({
+    prizes: [customPrize],
+    winners: [{ id: 'winner-1', prizeName: 'Custom Detox', prizeEmoji: 'C', timestamp: 123 }],
+    adminUnlocked: true,
+    soundEnabled: false,
+    sheetsUrl: ' https://sheet.example ',
+    currentWinner: customPrize,
+    showWinnerOverlay: true,
+    isSpinning: true,
+  })
+
+  assert.deepEqual(migrated.prizes, [customPrize], 'migration should preserve durable custom prizes and inventory')
+  assert.equal(migrated.winners.length, 1, 'migration should preserve winner history')
+  assert.equal(migrated.adminUnlocked, true, 'migration should preserve admin setting')
+  assert.equal(migrated.soundEnabled, false, 'migration should preserve sound setting')
+  assert.equal(migrated.sheetsUrl, ' https://sheet.example ', 'migration should preserve sheet URL setting')
+  assert.equal(migrated.currentWinner, undefined, 'migration should drop transient current winner')
+  assert.equal(migrated.showWinnerOverlay, undefined, 'migration should drop transient overlay state')
+  assert.equal(migrated.isSpinning, undefined, 'migration should drop transient spinning state')
+
+  const partialized = partializeWheelState({
+    ...useWheelStore.getState(),
+    prizes: [customPrize],
+    winners: migrated.winners,
+    currentWinner: customPrize,
+    showWinnerOverlay: true,
+    isSpinning: true,
+    soundEnabled: false,
+  })
+
+  assert.deepEqual(partialized.prizes, [customPrize], 'partialize should persist prize configuration')
+  assert.equal(partialized.winners.length, 1, 'partialize should persist winner history')
+  assert.equal(partialized.soundEnabled, false, 'partialize should persist durable settings')
+  assert.equal(partialized.currentWinner, undefined, 'current winner should not be persisted across reloads')
+  assert.equal(partialized.showWinnerOverlay, undefined, 'winner overlay should not be persisted across reloads')
+  assert.equal(partialized.isSpinning, undefined, 'spin progress should not be persisted across reloads')
 } finally {
   await server.close()
 }

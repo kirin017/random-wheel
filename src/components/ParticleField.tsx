@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import Particles, { ParticlesProvider } from '@tsparticles/react'
 import type { Engine, ISourceOptions } from '@tsparticles/engine'
 import { OutMode } from '@tsparticles/engine'
@@ -11,12 +11,21 @@ interface ParticleFieldProps {
   density?: number
 }
 
-const particlesInit = async (engine: Engine): Promise<void> => {
-  await loadSlim(engine)
-}
-
 export default function ParticleField({ id, active, colors, density = 24 }: ParticleFieldProps) {
+  const [particlesReady, setParticlesReady] = useState(true)
   const colorKey = colors.join('|')
+
+  useEffect(() => {
+    if (active) setParticlesReady(true)
+  }, [active, id])
+
+  const handleParticlesInit = useCallback(async (engine: Engine): Promise<void> => {
+    try {
+      await loadSlim(engine)
+    } catch {
+      setParticlesReady(false)
+    }
+  }, [])
 
   const options = useMemo<ISourceOptions>(() => {
     const particleColors = colorKey.length > 0 ? colorKey.split('|') : []
@@ -44,11 +53,11 @@ export default function ParticleField({ id, active, colors, density = 24 }: Part
     }
   }, [colorKey, density])
 
-  if (!active) return null
+  if (!active || !particlesReady) return null
 
   return (
     <div className="absolute inset-0 pointer-events-none">
-      <ParticlesProvider init={particlesInit}>
+      <ParticlesProvider init={handleParticlesInit}>
         <Particles id={id} className="h-full w-full" options={options} />
       </ParticlesProvider>
     </div>
