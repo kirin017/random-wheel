@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useWheelStore, type Prize } from '../store/wheelStore'
-import { submitLeadToSheet } from '../utils/sheets'
+import { submitLeadToSheet, submitPayloadToSheet } from '../utils/sheets'
 import { BRAND_COLORS } from '../utils/brandPalette'
 import ProductAdminSection from './admin/ProductAdminSection'
 import OrdersAdminSection from './admin/OrdersAdminSection'
@@ -15,6 +15,7 @@ const PRESET_COLORS = [
 const EMOJIS = ['🥇', '🥈', '🥉', '🎁', '🌿', '🍵', '🥗', '🍯', '🧺', '💚', '🥭', '🍶', '🥛', '🥤', '🍊', '⚡']
 
 type AdminTab = 'prizes' | 'products' | 'orders' | 'sheet'
+type SheetTestState = 'idle' | 'sending-lead' | 'sending-order' | 'sent-lead' | 'sent-order'
 
 interface PrizeFormData {
   name: string
@@ -58,22 +59,38 @@ export default function AdminPanel() {
   const [form, setForm] = useState<PrizeFormData>(EMPTY_FORM)
   const [showAddForm, setShowAddForm] = useState(false)
   const [sheetDraft, setSheetDraft] = useState(sheetsUrl)
-  const [sheetTest, setSheetTest] = useState<'idle' | 'sending' | 'sent'>('idle')
+  const [sheetTest, setSheetTest] = useState<SheetTestState>('idle')
   const [panelOpen, setPanelOpen] = useState(adminUnlocked)
   const [adminTab, setAdminTab] = useState<AdminTab>('prizes')
 
-  async function testSheet() {
+  async function testSheet(kind: 'lead' | 'order') {
     if (!sheetDraft.trim()) return
     setSheetsUrl(sheetDraft)
-    setSheetTest('sending')
-    await submitLeadToSheet(sheetDraft.trim(), {
-      name: 'Khách thử nghiệm',
-      phone: '0900000000',
-      prize: '🧪 Gửi thử kết nối',
-      consent: true,
-      timestamp: Date.now(),
-    })
-    setSheetTest('sent')
+    setSheetTest(kind === 'lead' ? 'sending-lead' : 'sending-order')
+    if (kind === 'lead') {
+      await submitLeadToSheet(sheetDraft.trim(), {
+        name: 'Khách thử nghiệm',
+        phone: '0900000000',
+        prize: '🧪 Gửi thử kết nối',
+        consent: true,
+        timestamp: Date.now(),
+      })
+      setSheetTest('sent-lead')
+    } else {
+      await submitPayloadToSheet(sheetDraft.trim(), {
+        type: 'order',
+        customerName: 'Khách đặt thử',
+        phone: '0900000000',
+        address: 'Địa chỉ nhận thử',
+        preferredTime: 'Sáng mai',
+        note: 'Gửi thử kết nối đơn hàng',
+        itemSummary: '1 x Ginger Shot - Vàng (35.000đ)',
+        subtotal: 35000,
+        status: 'new',
+        timestamp: Date.now(),
+      })
+      setSheetTest('sent-order')
+    }
     setTimeout(() => setSheetTest('idle'), 4000)
   }
 
@@ -334,7 +351,7 @@ export default function AdminPanel() {
           </span>
         </div>
         <p className="text-xs text-cocoa-500 mb-2 leading-snug">
-          Dán link Web App (Apps Script) để mỗi lượt nhận quà tự ghi vào Sheet. Xem hướng dẫn trong tệp
+          Dán link Web App (Apps Script) để mỗi lượt nhận quà và đơn checkout tự ghi vào Sheet. Xem hướng dẫn trong tệp
           <span className="font-mono text-[11px] bg-cream-200 px-1 py-0.5 rounded mx-1">GOOGLE_SHEETS_SETUP.md</span>.
         </p>
         <input
@@ -353,11 +370,18 @@ export default function AdminPanel() {
             Lưu link
           </button>
           <button
-            onClick={testSheet}
-            disabled={!sheetDraft.trim() || sheetTest === 'sending'}
+            onClick={() => testSheet('lead')}
+            disabled={!sheetDraft.trim() || sheetTest === 'sending-lead' || sheetTest === 'sending-order'}
             className="flex-1 text-xs bg-cream-200 hover:bg-cream-300 text-cocoa-700 px-3 py-2 rounded-lg transition-colors font-semibold disabled:opacity-50"
           >
-            {sheetTest === 'sending' ? 'Đang gửi…' : sheetTest === 'sent' ? 'Đã gửi thử ✓' : 'Gửi thử'}
+            {sheetTest === 'sending-lead' ? 'Đang gửi…' : sheetTest === 'sent-lead' ? 'Lead ✓' : 'Test lead'}
+          </button>
+          <button
+            onClick={() => testSheet('order')}
+            disabled={!sheetDraft.trim() || sheetTest === 'sending-lead' || sheetTest === 'sending-order'}
+            className="flex-1 text-xs bg-cream-200 hover:bg-cream-300 text-cocoa-700 px-3 py-2 rounded-lg transition-colors font-semibold disabled:opacity-50"
+          >
+            {sheetTest === 'sending-order' ? 'Đang gửi…' : sheetTest === 'sent-order' ? 'Đơn ✓' : 'Test đơn'}
           </button>
           {sheetsUrl && (
             <button
@@ -368,8 +392,10 @@ export default function AdminPanel() {
             </button>
           )}
         </div>
-        {sheetTest === 'sent' && (
-          <p className="text-xs text-sage-700 mt-2">Đã gửi 1 dòng thử — kiểm tra Google Sheet nhé!</p>
+        {(sheetTest === 'sent-lead' || sheetTest === 'sent-order') && (
+          <p className="text-xs text-sage-700 mt-2">
+            Đã gửi 1 dòng {sheetTest === 'sent-order' ? 'đơn hàng' : 'lead'} thử — kiểm tra Google Sheet nhé!
+          </p>
         )}
       </div>
       )}

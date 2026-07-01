@@ -41,12 +41,15 @@ export default function ProductAdminSection() {
   }
 
   function save() {
+    const safeVariants = draft.variants.length
+      ? draft.variants
+      : EMPTY_PRODUCT.variants
     const normalized: Product = {
       ...draft,
       id: draft.id || slugify(draft.name) || `product-${Date.now()}`,
       name: draft.name.trim() || 'Sản phẩm',
       category: draft.category.trim() || 'BYT',
-      variants: draft.variants.map((variant) => ({
+      variants: safeVariants.map((variant) => ({
         ...variant,
         id: variant.id || slugify(variant.name) || `variant-${Date.now()}`,
         name: variant.name.trim() || 'Mặc định',
@@ -64,6 +67,15 @@ export default function ProductAdminSection() {
     setDraft((current) => ({
       ...current,
       variants: current.variants.map((variant, i) => (i === index ? { ...variant, ...updates } : variant)),
+    }))
+  }
+
+  function removeVariant(index: number) {
+    setDraft((current) => ({
+      ...current,
+      variants: current.variants.length <= 1
+        ? current.variants
+        : current.variants.filter((_, i) => i !== index),
     }))
   }
 
@@ -90,10 +102,20 @@ export default function ProductAdminSection() {
 
           <div className="space-y-2">
             {draft.variants.map((variant, index) => (
-              <div key={`${variant.id}-${index}`} className="grid grid-cols-[1fr_86px_64px] gap-2">
+              <div key={`${variant.id}-${index}`} className="grid grid-cols-[1fr_86px_64px_38px] gap-2">
                 <input value={variant.name} onChange={(event) => updateVariant(index, { name: event.target.value })} placeholder="Biến thể" className="rounded-lg border border-cream-300 bg-cream-50 px-2 py-2 text-xs outline-none" />
                 <input value={variant.price} onChange={(event) => updateVariant(index, { price: Number(event.target.value) })} type="number" className="rounded-lg border border-cream-300 bg-cream-50 px-2 py-2 text-xs outline-none" />
                 <input value={variant.unit} onChange={(event) => updateVariant(index, { unit: event.target.value })} placeholder="Đơn vị" className="rounded-lg border border-cream-300 bg-cream-50 px-2 py-2 text-xs outline-none" />
+                <button
+                  type="button"
+                  onClick={() => removeVariant(index)}
+                  disabled={draft.variants.length <= 1}
+                  className="rounded-lg bg-clay-300/40 text-xs font-bold text-clay-600 disabled:cursor-not-allowed disabled:opacity-40"
+                  aria-label={`Xóa biến thể ${variant.name || index + 1}`}
+                  title="Xóa biến thể"
+                >
+                  ×
+                </button>
               </div>
             ))}
             <button onClick={() => setDraft((current) => ({ ...current, variants: [...current.variants, { id: `variant-${Date.now()}`, name: 'Mới', price: 1000, unit: 'phần' }] }))} className="text-xs font-bold text-sage-700">+ Thêm biến thể</button>
