@@ -352,6 +352,7 @@ export default function AdminPanel() {
         </div>
         <p className="text-xs text-cocoa-500 mb-2 leading-snug">
           Dán link Web App (Apps Script) để mỗi lượt nhận quà và đơn checkout tự ghi vào Sheet. Xem hướng dẫn trong tệp
+          {' '}
           <span className="font-mono text-[11px] bg-cream-200 px-1 py-0.5 rounded mx-1">GOOGLE_SHEETS_SETUP.md</span>.
         </p>
         <input

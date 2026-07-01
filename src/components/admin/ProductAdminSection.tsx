@@ -137,6 +137,8 @@ export default function ProductAdminSection() {
                 <p className="truncate text-sm font-bold text-cocoa-900">{product.name}</p>
                 <p className="text-xs text-cocoa-500">{product.variants.length} biến thể · từ {formatVnd(Math.min(...product.variants.map((variant) => variant.price)))}</p>
               </div>
+            </div>
+            <div className="mt-3 grid grid-cols-3 gap-2">
               <button onClick={() => updateProduct(product.id, { available: !product.available })} className="rounded-lg bg-cream-200 px-2 py-1.5 text-xs font-semibold text-cocoa-700">{product.available ? 'Đang bán' : 'Ẩn'}</button>
               <button onClick={() => startEdit(product)} className="rounded-lg bg-cream-200 px-2 py-1.5 text-xs font-semibold text-cocoa-700">Sửa</button>
               <button onClick={() => deleteProduct(product.id)} className="rounded-lg bg-clay-300/40 px-2 py-1.5 text-xs font-semibold text-clay-600">Xóa</button>
