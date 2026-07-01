@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useWheelStore } from '../store/wheelStore'
 import { drawShareCard, canvasToBlob } from '../utils/shareCard'
 import { submitLeadToSheet } from '../utils/sheets'
 import { BRAND_COLORS } from '../utils/brandPalette'
+import ProductSpotlightReveal from './ProductSpotlightReveal'
 
-type Step = 'reveal' | 'form' | 'share'
+type Step = 'spotlight' | 'reveal' | 'form' | 'share'
 
 function isValidVNPhone(raw: string): boolean {
   return /^0\d{9}$/.test(raw.replace(/[\s.]/g, ''))
@@ -22,7 +23,7 @@ export default function WinnerOverlay() {
   } = useWheelStore()
 
   const [imgErr, setImgErr] = useState(false)
-  const [step, setStep] = useState<Step>('reveal')
+  const [step, setStep] = useState<Step>('spotlight')
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [consent, setConsent] = useState(true)
@@ -32,10 +33,15 @@ export default function WinnerOverlay() {
   const [cardBuilding, setCardBuilding] = useState(false)
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
 
+  const handleClose = useCallback(() => {
+    setShowWinnerOverlay(false)
+    setTimeout(() => setCurrentWinner(null), 300)
+  }, [setCurrentWinner, setShowWinnerOverlay])
+
   // Reset the whole flow whenever a new winner appears
   useEffect(() => {
     setImgErr(false)
-    setStep('reveal')
+    setStep('spotlight')
     setName('')
     setPhone('')
     setConsent(true)
@@ -46,23 +52,17 @@ export default function WinnerOverlay() {
   useEffect(() => {
     if (!showWinnerOverlay) return
     const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') handleClose()
+      if (e.key === 'Escape' && step !== 'spotlight') handleClose()
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showWinnerOverlay])
+  }, [handleClose, showWinnerOverlay, step])
 
   if (!showWinnerOverlay || !currentWinner) return null
 
   const winner = currentWinner
   const isConsolation = winner.quantity === -1
   const hasImage = !!winner.image && !imgErr
-
-  function handleClose() {
-    setShowWinnerOverlay(false)
-    setTimeout(() => setCurrentWinner(null), 300)
-  }
 
   function goToForm() {
     setStep('form')
@@ -150,13 +150,17 @@ export default function WinnerOverlay() {
     <div
       className="fixed inset-0 z-50 flex items-center justify-center animate-fade-in"
       style={{ background: 'rgba(23,35,31,0.68)', backdropFilter: 'blur(8px)' }}
-      onClick={handleClose}
+      onClick={step === 'spotlight' ? undefined : handleClose}
     >
       <div
         className="relative animate-bounce-in overflow-hidden rounded-[28px] max-w-sm w-full mx-4 bg-cream-50 shadow-lift"
         style={{ border: `2.5px solid ${winner.color}` }}
         onClick={(e) => e.stopPropagation()}
       >
+        {step === 'spotlight' && (
+          <ProductSpotlightReveal winner={winner} onDone={() => setStep('reveal')} />
+        )}
+
         {/* ===== STEP: REVEAL ===== */}
         {step === 'reveal' && (
           <>
