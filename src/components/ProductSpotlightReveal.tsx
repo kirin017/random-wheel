@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import confetti from 'canvas-confetti'
 import { gsap } from 'gsap'
 import type { Prize } from '../store/wheelStore'
@@ -15,62 +15,77 @@ export default function ProductSpotlightReveal({ winner, onDone }: ProductSpotli
   const overlayRef = useRef<HTMLDivElement>(null)
   const productRef = useRef<HTMLDivElement>(null)
   const glowRef = useRef<HTMLDivElement>(null)
+  const doneRef = useRef(onDone)
   const [imgErr, setImgErr] = useState(false)
+  const reducedMotion = prefersReducedMotion()
   const hasImage = !!winner.image && !imgErr
 
   useEffect(() => {
-    const reducedMotion = prefersReducedMotion()
+    doneRef.current = onDone
+  }, [onDone])
+
+  useLayoutEffect(() => {
     const overlay = overlayRef.current
     const product = productRef.current
     const glow = glowRef.current
-    const duration = reducedMotion ? 0.9 : 2.85
+    const totalDuration = reducedMotion ? 0.9 : 2.85
 
-    const timeline = gsap.timeline({
-      onComplete: onDone,
-    })
+    const timeline = gsap.timeline()
 
     if (overlay) {
       timeline.fromTo(overlay, { opacity: 0 }, { opacity: 1, duration: reducedMotion ? 0.08 : 0.22, ease: 'power2.out' }, 0)
     }
     if (product) {
-      timeline.fromTo(
-        product,
-        { scale: reducedMotion ? 1 : 0.78, y: reducedMotion ? 0 : 18, opacity: 0 },
-        { scale: 1, y: 0, opacity: 1, duration: reducedMotion ? 0.12 : 0.82, ease: reducedMotion ? 'power1.out' : 'back.out(1.28)' },
-        0.18,
-      )
+      if (reducedMotion) {
+        timeline.fromTo(product, { opacity: 0 }, { opacity: 1, duration: 0.12, ease: 'power1.out' }, 0.08)
+      } else {
+        timeline.fromTo(
+          product,
+          { scale: 0.78, y: 18, opacity: 0 },
+          { scale: 1, y: 0, opacity: 1, duration: 0.82, ease: 'back.out(1.28)' },
+          0.18,
+        )
+      }
     }
     if (glow) {
-      timeline.fromTo(
-        glow,
-        { scale: 0.72, opacity: 0 },
-        { scale: 1.14, opacity: reducedMotion ? 0.36 : 0.72, duration: reducedMotion ? 0.18 : 1.25, ease: 'power2.out' },
-        0.22,
-      )
+      if (reducedMotion) {
+        timeline.fromTo(glow, { opacity: 0 }, { opacity: 0.36, duration: 0.12, ease: 'power1.out' }, 0.12)
+      } else {
+        timeline.fromTo(
+          glow,
+          { scale: 0.72, opacity: 0 },
+          { scale: 1.14, opacity: 0.72, duration: 1.25, ease: 'power2.out' },
+          0.22,
+        )
+      }
+    }
+
+    if (!reducedMotion) {
+      timeline.call(() => {
+        confetti({
+          particleCount: 120,
+          spread: 68,
+          origin: { y: 0.54 },
+          scalar: 0.9,
+          colors: [winner.color, BRAND_COLORS.citrus, BRAND_COLORS.surface, BRAND_COLORS.tomato, BRAND_COLORS.leaf],
+        })
+      }, undefined, 0.95)
     }
 
     timeline.call(() => {
-      confetti({
-        particleCount: reducedMotion ? 45 : 120,
-        spread: 68,
-        origin: { y: 0.54 },
-        scalar: reducedMotion ? 0.7 : 0.9,
-        colors: [winner.color, BRAND_COLORS.citrus, BRAND_COLORS.surface, BRAND_COLORS.tomato, BRAND_COLORS.leaf],
-      })
-    }, undefined, reducedMotion ? 0.28 : 0.95)
-
-    timeline.to({}, { duration })
+      doneRef.current()
+    }, undefined, totalDuration)
 
     return () => {
       timeline.kill()
     }
-  }, [onDone, winner.color])
+  }, [reducedMotion, winner.color, winner.id])
 
   return (
     <div ref={overlayRef} className="relative min-h-[430px] overflow-hidden bg-brand-ink text-center text-brand-cream">
       <ParticleField
         id={`winner-particles-${winner.id}`}
-        active={!prefersReducedMotion()}
+        active={!reducedMotion}
         colors={[winner.color, BRAND_COLORS.citrus, BRAND_COLORS.leaf, BRAND_COLORS.surface]}
         density={20}
       />

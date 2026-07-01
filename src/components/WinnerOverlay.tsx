@@ -38,6 +38,10 @@ export default function WinnerOverlay() {
     setTimeout(() => setCurrentWinner(null), 300)
   }, [setCurrentWinner, setShowWinnerOverlay])
 
+  const handleSpotlightDone = useCallback(() => {
+    setStep('reveal')
+  }, [])
+
   // Reset the whole flow whenever a new winner appears
   useEffect(() => {
     setImgErr(false)
@@ -153,12 +157,14 @@ export default function WinnerOverlay() {
       onClick={step === 'spotlight' ? undefined : handleClose}
     >
       <div
-        className="relative animate-bounce-in overflow-hidden rounded-[28px] max-w-sm w-full mx-4 bg-cream-50 shadow-lift"
+        role="dialog"
+        aria-modal="true"
+        className="relative animate-bounce-in max-h-[calc(100vh-2rem)] overflow-y-auto overflow-x-hidden rounded-[28px] max-w-sm w-full mx-4 bg-cream-50 shadow-lift"
         style={{ border: `2.5px solid ${winner.color}` }}
         onClick={(e) => e.stopPropagation()}
       >
         {step === 'spotlight' && (
-          <ProductSpotlightReveal winner={winner} onDone={() => setStep('reveal')} />
+          <ProductSpotlightReveal winner={winner} onDone={handleSpotlightDone} />
         )}
 
         {/* ===== STEP: REVEAL ===== */}
