@@ -240,14 +240,14 @@ export default function App() {
         </header>
 
         {/* Main layout */}
-        <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+        <main className="max-w-6xl mx-auto px-4 sm:px-6 py-5 sm:py-12">
           {activeTab === 'home' && (
             <BrandLanding onShop={() => setActiveTab('shop')} onWheel={() => setActiveTab('wheel')} />
           )}
 
           {activeTab === 'wheel' && (
             <div className="flex flex-col items-center">
-              <p className="font-display text-2xl sm:text-3xl font-bold text-brand-ink text-center mb-1">
+              <p className="font-display text-xl sm:text-3xl font-bold text-brand-ink text-center mb-1">
                 Vòng quay may mắn
               </p>
               {/* Decorative sage accent divider */}
@@ -256,7 +256,7 @@ export default function App() {
                 <div className="w-1.5 h-1.5 rounded-full bg-brand-citrus" />
                 <div className="h-px w-10 rounded-full bg-brand-leaf/60" />
               </div>
-              <p className="text-brand-muted text-sm text-center mb-7 max-w-sm text-balance">
+              <p className="text-brand-muted text-sm text-center mb-4 sm:mb-7 max-w-sm text-balance">
                 Một lựa chọn tử tế hơn cho cả nhà. Quay để nhận quà từ Bếp Yêu Thương.
               </p>
               <Wheel />

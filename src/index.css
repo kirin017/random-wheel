@@ -34,6 +34,54 @@
 }
 
 @layer utilities {
+  .wheel-shell {
+    transform-origin: center;
+    will-change: transform;
+  }
+
+  .wheel-light-sweep {
+    transform: translateZ(0);
+    opacity: 0;
+  }
+
+  .wheel-light-sweep::before {
+    content: '';
+    position: absolute;
+    top: -18%;
+    bottom: -18%;
+    left: 0;
+    width: 58%;
+    background: linear-gradient(105deg, transparent 22%, rgba(255,255,255,0.68) 48%, transparent 74%);
+    transform: translateX(-145%) rotate(-18deg);
+    transform-origin: center;
+  }
+
+  .wheel-light-sweep.is-active {
+    opacity: 1;
+  }
+
+  .wheel-light-sweep.is-active::before {
+    animation: wheel-light-sweep 1.2s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .winner-segment-glow {
+    filter: drop-shadow(0 0 10px currentColor) drop-shadow(0 0 18px currentColor);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .center-burst span {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 0.45rem;
+    height: 0.45rem;
+    border-radius: 999px;
+    background: var(--burst-color, #f6c744);
+    transform: translate(-50%, -50%) rotate(var(--burst-angle)) translateY(-58px);
+    animation: center-burst 720ms ease-out both;
+  }
+
   .wheel-shadow {
     filter: drop-shadow(0 14px 32px rgba(71, 59, 48, 0.18));
   }
@@ -83,6 +131,18 @@
   100% { transform: scale(1); }
 }
 
+@keyframes wheel-light-sweep {
+  0% { opacity: 0; transform: translateX(-130%) rotate(-18deg); }
+  18% { opacity: 0.8; }
+  100% { opacity: 0; transform: translateX(130%) rotate(-18deg); }
+}
+
+@keyframes center-burst {
+  0% { opacity: 0; transform: translate(-50%, -50%) rotate(var(--burst-angle)) translateY(0) scale(0.4); }
+  18% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -50%) rotate(var(--burst-angle)) translateY(-86px) scale(0.9); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .pulse-ring,
   .animate-float-soft,
@@ -94,5 +154,11 @@
     transition: none !important;
     transform: none !important;
     opacity: 1 !important;
+  }
+
+  .wheel-light-sweep.is-active,
+  .center-burst span {
+    animation: none !important;
+    opacity: 0 !important;
   }
 }

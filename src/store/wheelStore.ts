@@ -54,6 +54,11 @@ interface WheelState {
   decrementPrize: (id: string) => void
 }
 
+type PersistedWheelState = Pick<
+  WheelState,
+  'prizes' | 'winners' | 'adminUnlocked' | 'soundEnabled' | 'sheetsUrl'
+>
+
 const DEFAULT_PRIZE_COLORS: Record<string, string> = {
   'ginger-shot-any': BRAND_COLORS.tomatoDark,
   'sua-hat-any': BRAND_COLORS.forest,
@@ -71,6 +76,48 @@ const DEFAULT_PRIZES: Prize[] = [
   { id: 'smoothie-any', name: 'Smoothie Vị Bất Kỳ', color: DEFAULT_PRIZE_COLORS['smoothie-any'], quantity: 999, weight: 7, emoji: '🥤', image: driveImg('1eMgxarXNiVrAv_KORItsR4ZIwbhw8zIw') },
   { id: 'hu-mach-any', name: 'Hũ Mạch Vị Bất Kỳ', color: DEFAULT_PRIZE_COLORS['hu-mach-any'], quantity: 999, weight: 3, emoji: '🥣', image: driveImg('1YO7DHEJ3EZRPJWnBe3KLXEDXvJziN9Mt') },
 ]
+
+function isPersistedPrize(value: unknown): value is Prize {
+  if (!value || typeof value !== 'object') return false
+  const prize = value as Partial<Prize>
+
+  return (
+    typeof prize.id === 'string' &&
+    typeof prize.name === 'string' &&
+    typeof prize.color === 'string' &&
+    typeof prize.quantity === 'number' &&
+    Number.isFinite(prize.quantity) &&
+    typeof prize.weight === 'number' &&
+    Number.isFinite(prize.weight) &&
+    typeof prize.emoji === 'string' &&
+    (typeof prize.image === 'undefined' || typeof prize.image === 'string')
+  )
+}
+
+export function migrateWheelState(persistedState: unknown): PersistedWheelState {
+  const state = (persistedState ?? {}) as Partial<WheelState>
+  const persistedPrizes = Array.isArray(state.prizes) && state.prizes.every(isPersistedPrize)
+    ? state.prizes
+    : DEFAULT_PRIZES
+
+  return {
+    prizes: persistedPrizes,
+    winners: Array.isArray(state.winners) ? state.winners : [],
+    adminUnlocked: state.adminUnlocked ?? false,
+    soundEnabled: state.soundEnabled ?? true,
+    sheetsUrl: typeof state.sheetsUrl === 'string' ? state.sheetsUrl : '',
+  }
+}
+
+export function partializeWheelState(state: WheelState): PersistedWheelState {
+  return {
+    prizes: state.prizes,
+    winners: state.winners,
+    adminUnlocked: state.adminUnlocked,
+    soundEnabled: state.soundEnabled,
+    sheetsUrl: state.sheetsUrl,
+  }
+}
 
 export const useWheelStore = create<WheelState>()(
   persist(
@@ -121,15 +168,9 @@ export const useWheelStore = create<WheelState>()(
     }),
     {
       name: 'random-wheel-v2',
-      version: 4,
-      migrate: (persistedState) => {
-        const state = persistedState as Partial<WheelState>
-
-        return {
-          ...state,
-          prizes: DEFAULT_PRIZES,
-        }
-      },
+      version: 5,
+      migrate: migrateWheelState,
+      partialize: partializeWheelState,
     },
   ),
 )
