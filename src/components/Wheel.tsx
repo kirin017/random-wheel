@@ -282,17 +282,19 @@ export default function Wheel() {
           style={{ background: 'radial-gradient(circle, rgba(21,94,59,0.18) 0%, transparent 70%)' }}
         />
         <div className={`pointer-events-none absolute inset-0 overflow-hidden rounded-full wheel-light-sweep ${spinPhase !== 'idle' ? 'is-active' : ''}`} />
-        <div key={centerBurstKey} className="pointer-events-none absolute inset-0 center-burst">
-          {Array.from({ length: 10 }).map((_, index) => (
-            <span
-              key={index}
-              style={{
-                '--burst-angle': `${index * 36}deg`,
-                '--burst-color': index % 2 === 0 ? BRAND_COLORS.citrus : BRAND_COLORS.leaf,
-              } as CSSProperties}
-            />
-          ))}
-        </div>
+        {centerBurstKey > 0 && (
+          <div key={centerBurstKey} className="pointer-events-none absolute inset-0 center-burst">
+            {Array.from({ length: 10 }).map((_, index) => (
+              <span
+                key={index}
+                style={{
+                  '--burst-angle': `${index * 36}deg`,
+                  '--burst-color': index % 2 === 0 ? BRAND_COLORS.citrus : BRAND_COLORS.leaf,
+                } as CSSProperties}
+              />
+            ))}
+          </div>
+        )}
 
         <svg
           width="500"

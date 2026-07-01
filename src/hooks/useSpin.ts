@@ -14,6 +14,30 @@ import { prefersReducedMotion } from '../utils/reducedMotion'
 
 type SpinPhase = 'idle' | 'launching' | 'spinning' | 'decelerating' | 'settling' | 'spotlight'
 
+const VISUAL_TICK_THROTTLE_MS = 80
+const WINNER_GLOW_PAUSE_SECONDS = 0.75
+const REDUCED_MOTION_WINNER_GLOW_PAUSE_SECONDS = 0.2
+
+function getNow(): number {
+  if (typeof performance !== 'undefined' && typeof performance.now === 'function') return performance.now()
+  return Date.now()
+}
+
+function normalizeDegrees(rotation: number): number {
+  return ((rotation % 360) + 360) % 360
+}
+
+function shortestTargetAngle(currentRotation: number, targetRotation: number): number {
+  const current = normalizeDegrees(currentRotation)
+  const target = normalizeDegrees(targetRotation)
+  let delta = target - current
+
+  if (delta > 180) delta -= 360
+  if (delta < -180) delta += 360
+
+  return currentRotation + delta
+}
+
 interface UseSpinOptions {
   wheelRef: RefObject<SVGGElement | null>
   wheelShellRef: RefObject<HTMLDivElement | null>
@@ -39,6 +63,8 @@ export function useSpin({
   const timelineRef = useRef<gsap.core.Timeline | null>(null)
   const pointerTweenRef = useRef<gsap.core.Timeline | null>(null)
   const lastSegmentRef = useRef<number | null>(null)
+  const lastPointerTickAtRef = useRef(Number.NEGATIVE_INFINITY)
+  const tickEffectsEnabledRef = useRef(true)
   const {
     prizes,
     isSpinning,
@@ -58,11 +84,18 @@ export function useSpin({
     pointerTweenRef.current?.kill()
     pointerTweenRef.current = null
     lastSegmentRef.current = null
+    lastPointerTickAtRef.current = Number.NEGATIVE_INFINITY
   }, [pointerRef, wheelRef, wheelShellRef])
 
   const tickPointer = useCallback(() => {
     const pointer = pointerRef.current
     if (!pointer) return
+    if (!tickEffectsEnabledRef.current) return
+
+    const now = getNow()
+    if (now - lastPointerTickAtRef.current < VISUAL_TICK_THROTTLE_MS) return
+    lastPointerTickAtRef.current = now
+
     pointerTweenRef.current?.kill()
     pointerTweenRef.current = gsap.timeline()
       .to(pointer, { rotation: -8, duration: 0.045, ease: 'power2.out' })
@@ -84,6 +117,7 @@ export function useSpin({
     }
     if (segmentIndex !== lastSegmentRef.current) {
       lastSegmentRef.current = segmentIndex
+      if (!tickEffectsEnabledRef.current) return
       tickPointer()
       playSpinSound('tick', soundEnabled)
       vibrateTick()
@@ -103,7 +137,10 @@ export function useSpin({
     if (!wheel || !shell) return
 
     const reducedMotion = prefersReducedMotion()
-    const targetAngle = calcTargetAngle(prizes, winner, rotationRef.current)
+    const normalTargetAngle = calcTargetAngle(prizes, winner, rotationRef.current)
+    const targetAngle = reducedMotion
+      ? shortestTargetAngle(rotationRef.current, normalTargetAngle)
+      : normalTargetAngle
     const winnerSegmentKey = getWinnerSegmentKey(prizes, winner, targetAngle)
     const startRotation = rotationRef.current
     const mainDuration = reducedMotion ? 2.1 : 5.4 + Math.random() * 0.8
@@ -112,6 +149,7 @@ export function useSpin({
 
     timelineRef.current?.kill()
     cleanupVisuals()
+    tickEffectsEnabledRef.current = !reducedMotion
     setIsSpinning(true)
     setCurrentWinner(null)
     setShowWinnerOverlay(false)
@@ -121,19 +159,7 @@ export function useSpin({
     playSpinSound('press', soundEnabled)
     if (!reducedMotion) onCenterBurst()
 
-    const timeline = gsap.timeline({
-      onComplete: () => {
-        rotationRef.current = targetAngle
-        cleanupVisuals()
-        onPhaseChange('spotlight')
-        onWinnerSegmentChange(winnerSegmentKey)
-        setIsSpinning(false)
-        setCurrentWinner(winner)
-        setShowWinnerOverlay(true)
-        playSpinSound('win', soundEnabled)
-        vibrateWin()
-      },
-    })
+    const timeline = gsap.timeline()
 
     timelineRef.current = timeline
     gsap.set(wheel, { transformOrigin: '250px 250px', filter: 'blur(0px)', rotation: startRotation })
@@ -167,6 +193,25 @@ export function useSpin({
         onUpdate: () => updateRotation(rotationState.value),
       })
       .to(shell, { scale: 1, duration: reducedMotion ? 0.01 : 0.32, ease: 'power2.out' }, '<')
+      .call(() => {
+        rotationRef.current = targetAngle
+        gsap.set(wheel, { rotation: targetAngle })
+        cleanupVisuals()
+        onPhaseChange('spotlight')
+        onWinnerSegmentChange(winnerSegmentKey)
+        playSpinSound('win', soundEnabled)
+        vibrateWin()
+      })
+      .to({}, { duration: reducedMotion ? REDUCED_MOTION_WINNER_GLOW_PAUSE_SECONDS : WINNER_GLOW_PAUSE_SECONDS })
+      .call(() => {
+        setCurrentWinner(winner)
+        setShowWinnerOverlay(true)
+        setIsSpinning(false)
+        onWinnerSegmentChange(null)
+        onPhaseChange('idle')
+        tickEffectsEnabledRef.current = true
+        timelineRef.current = null
+      })
   }, [
     cleanupVisuals,
     isSpinning,
@@ -188,11 +233,16 @@ export function useSpin({
   useEffect(() => {
     return () => {
       timelineRef.current?.kill()
-      pointerTweenRef.current?.kill()
+      timelineRef.current = null
+      cleanupVisuals()
+      tickEffectsEnabledRef.current = true
       stopSpinSounds()
       unloadSpinSounds()
+      setIsSpinning(false)
+      onPhaseChange('idle')
+      onWinnerSegmentChange(null)
     }
-  }, [])
+  }, [cleanupVisuals, onPhaseChange, onWinnerSegmentChange, setIsSpinning])
 
   return { spin, rotationRef }
 }
