@@ -40,12 +40,27 @@
   }
 
   .wheel-light-sweep {
-    background: linear-gradient(105deg, transparent 22%, rgba(255,255,255,0.68) 48%, transparent 74%);
-    transform: translateX(-130%) rotate(-18deg);
+    transform: translateZ(0);
     opacity: 0;
   }
 
+  .wheel-light-sweep::before {
+    content: '';
+    position: absolute;
+    top: -18%;
+    bottom: -18%;
+    left: 0;
+    width: 58%;
+    background: linear-gradient(105deg, transparent 22%, rgba(255,255,255,0.68) 48%, transparent 74%);
+    transform: translateX(-145%) rotate(-18deg);
+    transform-origin: center;
+  }
+
   .wheel-light-sweep.is-active {
+    opacity: 1;
+  }
+
+  .wheel-light-sweep.is-active::before {
     animation: wheel-light-sweep 1.2s cubic-bezier(0.22, 1, 0.36, 1) both;
   }
 

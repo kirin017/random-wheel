@@ -18,6 +18,8 @@ type SpinPhase = 'idle' | 'launching' | 'spinning' | 'decelerating' | 'settling'
 const VISUAL_TICK_THROTTLE_MS = 80
 const WINNER_GLOW_PAUSE_SECONDS = 0.75
 const REDUCED_MOTION_WINNER_GLOW_PAUSE_SECONDS = 0.2
+const WHEEL_SVG_ORIGIN = '250 250'
+const POINTER_SVG_ORIGIN = '250 14'
 
 function getNow(): number {
   if (typeof performance !== 'undefined' && typeof performance.now === 'function') return performance.now()
@@ -79,9 +81,9 @@ export function useSpin({
     const wheel = wheelRef.current
     const shell = wheelShellRef.current
     const pointer = pointerRef.current
-    if (wheel) gsap.set(wheel, { filter: 'blur(0px)' })
+    if (wheel) gsap.set(wheel, { filter: 'blur(0px)', svgOrigin: WHEEL_SVG_ORIGIN })
     if (shell) gsap.set(shell, { scale: 1 })
-    if (pointer) gsap.set(pointer, { rotation: 0 })
+    if (pointer) gsap.set(pointer, { rotation: 0, svgOrigin: POINTER_SVG_ORIGIN })
     pointerTweenRef.current?.kill()
     pointerTweenRef.current = null
     lastSegmentRef.current = null
@@ -99,16 +101,16 @@ export function useSpin({
 
     pointerTweenRef.current?.kill()
     pointerTweenRef.current = gsap.timeline()
-      .to(pointer, { rotation: -8, duration: 0.045, ease: 'power2.out' })
-      .to(pointer, { rotation: 10, duration: 0.055, ease: 'power2.out' })
-      .to(pointer, { rotation: 0, duration: 0.12, ease: 'power2.out' })
+      .to(pointer, { rotation: -8, svgOrigin: POINTER_SVG_ORIGIN, duration: 0.045, ease: 'power2.out' })
+      .to(pointer, { rotation: 10, svgOrigin: POINTER_SVG_ORIGIN, duration: 0.055, ease: 'power2.out' })
+      .to(pointer, { rotation: 0, svgOrigin: POINTER_SVG_ORIGIN, duration: 0.12, ease: 'power2.out' })
   }, [pointerRef])
 
   const updateRotation = useCallback((rotation: number) => {
     const wheel = wheelRef.current
     if (!wheel) return
     rotationRef.current = rotation
-    gsap.set(wheel, { rotation })
+    gsap.set(wheel, { rotation, svgOrigin: WHEEL_SVG_ORIGIN })
 
     if (segmentCount <= 0) return
     const segmentIndex = getPointerSegmentIndex(rotation, segmentCount)
@@ -164,7 +166,7 @@ export function useSpin({
     const timeline = gsap.timeline()
 
     timelineRef.current = timeline
-    gsap.set(wheel, { transformOrigin: '250px 250px', filter: 'blur(0px)', rotation: startRotation })
+    gsap.set(wheel, { svgOrigin: WHEEL_SVG_ORIGIN, filter: 'blur(0px)', rotation: startRotation })
     gsap.set(shell, { scale: 1 })
 
     if (spinButtonRef.current && !reducedMotion) {
@@ -197,7 +199,7 @@ export function useSpin({
       .to(shell, { scale: 1, duration: reducedMotion ? 0.01 : 0.32, ease: 'power2.out' }, '<')
       .call(() => {
         rotationRef.current = targetAngle
-        gsap.set(wheel, { rotation: targetAngle })
+        gsap.set(wheel, { rotation: targetAngle, svgOrigin: WHEEL_SVG_ORIGIN })
         cleanupVisuals()
         onPhaseChange('spotlight')
         onWinnerSegmentChange(winnerSegmentKey)
