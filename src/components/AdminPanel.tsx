@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { useWheelStore, type Prize } from '../store/wheelStore'
 import { submitLeadToSheet } from '../utils/sheets'
 import { BRAND_COLORS } from '../utils/brandPalette'
+import ProductAdminSection from './admin/ProductAdminSection'
+import OrdersAdminSection from './admin/OrdersAdminSection'
 
 const ADMIN_PASSWORD = 'admin123'
 
@@ -11,6 +13,8 @@ const PRESET_COLORS = [
 ]
 
 const EMOJIS = ['🥇', '🥈', '🥉', '🎁', '🌿', '🍵', '🥗', '🍯', '🧺', '💚', '🥭', '🍶', '🥛', '🥤', '🍊', '⚡']
+
+type AdminTab = 'prizes' | 'products' | 'orders' | 'sheet'
 
 interface PrizeFormData {
   name: string
@@ -56,6 +60,7 @@ export default function AdminPanel() {
   const [sheetDraft, setSheetDraft] = useState(sheetsUrl)
   const [sheetTest, setSheetTest] = useState<'idle' | 'sending' | 'sent'>('idle')
   const [panelOpen, setPanelOpen] = useState(adminUnlocked)
+  const [adminTab, setAdminTab] = useState<AdminTab>('prizes')
 
   async function testSheet() {
     if (!sheetDraft.trim()) return
@@ -215,7 +220,7 @@ export default function AdminPanel() {
     <div className="fixed left-4 right-4 bottom-4 sm:left-auto sm:right-4 sm:top-24 sm:bottom-auto sm:w-[380px] z-[60] max-h-[calc(100dvh-6rem)] overflow-y-auto bg-cream-50 rounded-3xl p-5 border border-cream-300/80 shadow-soft space-y-5">
       <div className="flex items-center justify-between">
         <h2 className="font-display text-base font-bold text-cocoa-900">
-          Quản lý giải thưởng
+          Quản lý
         </h2>
         <div className="flex items-center gap-2">
           <button
@@ -243,6 +248,26 @@ export default function AdminPanel() {
         </div>
       </div>
 
+      <div className="grid grid-cols-4 gap-1 rounded-2xl bg-cream-100 p-1">
+        {([
+          ['prizes', 'Quà'],
+          ['products', 'SP'],
+          ['orders', 'Đơn'],
+          ['sheet', 'Sheet'],
+        ] as const).map(([tab, label]) => (
+          <button
+            key={tab}
+            type="button"
+            onClick={() => setAdminTab(tab)}
+            className={`rounded-xl px-2 py-2 text-xs font-bold transition-colors ${adminTab === tab ? 'bg-sage-600 text-cream-50' : 'text-cocoa-500 hover:bg-cream-200'}`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {adminTab === 'prizes' && (
+        <>
       {/* Prize list */}
       <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
         {prizes.map((prize) => (
@@ -294,8 +319,11 @@ export default function AdminPanel() {
           + Thêm giải thưởng
         </button>
       )}
+        </>
+      )}
 
       {/* Google Sheet sync */}
+      {adminTab === 'sheet' && (
       <div className="border-t border-cream-300/70 pt-4">
         <div className="flex items-center justify-between mb-2">
           <h3 className="font-display text-sm font-bold text-cocoa-900">Đồng bộ Google Sheet</h3>
@@ -344,9 +372,14 @@ export default function AdminPanel() {
           <p className="text-xs text-sage-700 mt-2">Đã gửi 1 dòng thử — kiểm tra Google Sheet nhé!</p>
         )}
       </div>
+      )}
+
+      {adminTab === 'products' && <ProductAdminSection />}
+
+      {adminTab === 'orders' && <OrdersAdminSection />}
 
       {/* Winners section */}
-      {winners.length > 0 && (
+      {adminTab === 'prizes' && winners.length > 0 && (
         <div className="border-t border-cream-300/70 pt-4 space-y-2">
           <div className="flex items-center justify-between">
             <h3 className="font-display text-sm font-bold text-cocoa-900">Khách hàng đã nhận ({winners.length})</h3>
